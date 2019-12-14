@@ -396,7 +396,7 @@ async def main(args: List[str] = None) -> int:
     factory.data_path = args.data_prefix
 
     with create_executor() as pool:
-        async with factory.create_drive(pool) as drive:
+        async with factory(pool) as drive:
             return await args.action(drive, pool, args)
 
 
