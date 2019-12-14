@@ -394,6 +394,7 @@ async def main(args: List[str] = None) -> int:
     factory = DriveFactory()
     factory.config_path = args.config_prefix
     factory.data_path = args.data_prefix
+    factory.load_config()
 
     with create_executor() as pool:
         async with factory(pool) as drive:
