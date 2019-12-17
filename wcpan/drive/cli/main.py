@@ -443,6 +443,12 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     find_parser.set_defaults(action=action_find, id_only=False,
                              include_trash=False)
 
+    info_parser = commands.add_parser('info', aliases=['i'],
+        help='display file information [offline]',
+    )
+    info_parser.set_defaults(action=action_info)
+    info_parser.add_argument('id_or_path', type=str)
+
     list_parser = commands.add_parser('list', aliases=['ls'],
         help='list folder [offline]',
     )
@@ -569,6 +575,16 @@ async def action_find(
     else:
         print_id_node_dict(nodes)
 
+    return 0
+
+
+async def action_info(
+    drive: Drive,
+    pool: concurrent.futures.Executor,
+    args: argparse.Namespace,
+) -> int:
+    node = await get_node_by_id_or_path(drive, args.id_or_path)
+    print_as_yaml(node.to_dict())
     return 0
 
 
