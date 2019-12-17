@@ -814,7 +814,7 @@ async def get_media_info(local_path: pathlib.Path) -> MediaInfo:
         return get_image_info(local_path)
 
     if type_.startswith('video/'):
-        pass
+        return await get_video_info(local_path)
 
     return None
 
