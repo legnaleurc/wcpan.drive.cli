@@ -9,8 +9,7 @@ import sys
 
 from wcpan.logger import setup as setup_logger
 
-from wcpan.drive.core.drive import DriveFactory, Drive
-from wcpan.drive.core.types import Node
+from wcpan.drive.core.drive import DriveFactory
 from wcpan.drive.core.util import (
     create_executor,
     get_default_config_path,
@@ -28,6 +27,7 @@ from .util import (
     traverse_node,
     wait_for_value,
 )
+from .interaction import interact
 
 
 async def main(args: List[str] = None) -> int:
@@ -48,9 +48,7 @@ async def main(args: List[str] = None) -> int:
     factory.data_path = args.data_prefix
     factory.load_config()
 
-    with create_executor() as pool:
-        async with factory(pool) as drive:
-            return await args.action(drive, pool, args)
+    return await args.action(factory, args)
 
 
 def parse_args(args: List[str]) -> argparse.Namespace:
@@ -154,6 +152,12 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     mv_parser.add_argument('source_id_or_path', type=str)
     mv_parser.add_argument('destination_path', type=str)
 
+    shell_parser = commands.add_parser('shell',
+        help='start an interactive shell',
+    )
+    shell_parser.set_defaults(action=action_shell)
+    shell_parser.add_argument('id_or_path', type=str, nargs='?')
+
     v_parser = commands.add_parser('verify', aliases=['v'],
         help='verify uploaded files/folders',
     )
@@ -194,32 +198,26 @@ async def action_help(message: str) -> None:
     print(message)
 
 
-async def action_sync(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    chunks = chunks_of(drive.sync(check_point=args.from_), 100)
-    async for changes in chunks:
-        if not args.verbose:
-            print(len(changes))
-        else:
-            for change in changes:
-                print_as_yaml(change)
-    return 0
+async def action_sync(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        chunks = chunks_of(drive.sync(check_point=args.from_), 100)
+        async for changes in chunks:
+            if not args.verbose:
+                print(len(changes))
+            else:
+                for change in changes:
+                    print_as_yaml(change)
+        return 0
 
 
-async def action_find(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    nodes = await drive.find_nodes_by_regex(args.pattern)
-    if not args.include_trash:
-        nodes = (_ for _ in nodes if not _.trashed)
-    nodes = (wait_for_value(_.id_, drive.get_path(_)) for _ in nodes)
-    nodes = await asyncio.gather(*nodes)
-    nodes = dict(nodes)
+async def action_find(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        nodes = await drive.find_nodes_by_regex(args.pattern)
+        if not args.include_trash:
+            nodes = (_ for _ in nodes if not _.trashed)
+        nodes = (wait_for_value(_.id_, drive.get_path(_)) for _ in nodes)
+        nodes = await asyncio.gather(*nodes)
+        nodes = dict(nodes)
 
     if args.id_only:
         for id_ in nodes:
@@ -230,50 +228,43 @@ async def action_find(
     return 0
 
 
-async def action_info(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
+async def action_info(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        node = await get_node_by_id_or_path(drive, args.id_or_path)
     print_as_yaml(node.to_dict())
     return 0
 
 
-async def action_list(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
-    nodes = await drive.get_children(node)
+async def action_list(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        node = await get_node_by_id_or_path(drive, args.id_or_path)
+        nodes = await drive.get_children(node)
     nodes = {_.id_: _.name for _ in nodes}
     print_id_node_dict(nodes)
     return 0
 
 
-async def action_tree(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
-    await traverse_node(drive, node, 0)
+async def action_tree(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        node = await get_node_by_id_or_path(drive, args.id_or_path)
+        await traverse_node(drive, node, 0)
     return 0
 
 
 async def action_download(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
+    factory: DriveFactory,
     args: argparse.Namespace,
 ) -> int:
-    node_list = (get_node_by_id_or_path(drive, _) for _ in args.id_or_path)
-    node_list = await asyncio.gather(*node_list)
-    node_list = [_ for _ in node_list if not _.trashed]
+    with create_executor() as pool:
+        async with factory(pool=pool) as drive:
+            node_list = (get_node_by_id_or_path(drive, _)
+                            for _ in args.id_or_path)
+            node_list = await asyncio.gather(*node_list)
+            node_list = [_ for _ in node_list if not _.trashed]
 
-    async with DownloadQueue(drive, pool, args.jobs) as queue_:
-        dst = pathlib.Path(args.destination)
-        await queue_.run(node_list, dst)
+            async with DownloadQueue(drive, pool, args.jobs) as queue_:
+                dst = pathlib.Path(args.destination)
+                await queue_.run(node_list, dst)
 
     if not queue_.failed:
         return 0
@@ -282,16 +273,14 @@ async def action_download(
     return 1
 
 
-async def action_upload(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
+async def action_upload(factory: DriveFactory, args: argparse.Namespace) -> int:
+    with create_executor() as pool:
+        async with factory(pool=pool) as drive:
+            node = await get_node_by_id_or_path(drive, args.id_or_path)
 
-    async with UploadQueue(drive, pool, args.jobs) as queue_:
-        src = pathlib.Path(args.source)
-        await queue_.run(src, node)
+            async with UploadQueue(drive, pool, args.jobs) as queue_:
+                src = pathlib.Path(args.source)
+                await queue_.run(src, node)
 
     if not queue_.failed:
         return 0
@@ -300,13 +289,10 @@ async def action_upload(
     return 1
 
 
-async def action_remove(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    rv = (trash_node(drive, _) for _ in args.id_or_path)
-    rv = await asyncio.gather(*rv)
+async def action_remove(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        rv = (trash_node(drive, _) for _ in args.id_or_path)
+        rv = await asyncio.gather(*rv)
     rv = filter(None, rv)
     rv = list(rv)
     if not rv:
@@ -316,48 +302,55 @@ async def action_remove(
     return 1
 
 
-async def action_rename(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    node = await get_node_by_id_or_path(drive, args.source_id_or_path)
-    node = await drive.rename_node(node, args.destination_path)
-    path = await drive.get_path(node)
+async def action_rename(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        node = await get_node_by_id_or_path(drive, args.source_id_or_path)
+        node = await drive.rename_node(node, args.destination_path)
+        path = await drive.get_path(node)
     return 0 if path else 1
 
 
-async def action_verify(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
+async def action_shell(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        if not args.id_or_path:
+            node = await drive.get_root_node()
+        else:
+            node = await get_node_by_id_or_path(drive, args.id_or_path)
 
-    v = UploadVerifier(drive, pool)
-    tasks = (pathlib.Path(local_path) for local_path in args.source)
-    tasks = [v.run(local_path, node) for local_path in tasks]
-    await asyncio.wait(tasks)
+    if not node or not node.is_folder:
+        print(f'{args.id_or_path} is not a folder')
+        return 1
+
+    interact(factory, node)
+    return 0
+
+
+async def action_verify(factory: DriveFactory, args: argparse.Namespace) -> int:
+    with create_executor() as pool:
+        async with factory(pool=pool) as drive:
+            node = await get_node_by_id_or_path(drive, args.id_or_path)
+
+            v = UploadVerifier(drive, pool)
+            tasks = (pathlib.Path(local_path) for local_path in args.source)
+            tasks = [v.run(local_path, node) for local_path in tasks]
+            await asyncio.wait(tasks)
 
     return 0
 
 
-async def action_doctor(
-    drive: Drive,
-    pool: concurrent.futures.Executor,
-    args: argparse.Namespace,
-) -> int:
-    for node in await drive.find_multiple_parents_nodes():
-        print(f'{node.name} has multiple parents, please select one parent:')
-        parent_list = (drive.get_node_by_id(_) for _ in node.parent_list)
-        parent_list = await asyncio.gather(*parent_list)
-        for index, parent_node in enumerate(parent_list):
-            print(f'{index}: {parent_node.name}')
-        try:
-            choice = input()
-            choice = int(choice)
-            parent = parent_list[choice]
-            await drive.set_node_parent_by_id(node, parent.id_)
-        except Exception as e:
-            print('unknown error, skipped', e)
-            continue
+async def action_doctor(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        for node in await drive.find_multiple_parents_nodes():
+            print(f'{node.name} has multiple parents, please select one parent:')
+            parent_list = (drive.get_node_by_id(_) for _ in node.parent_list)
+            parent_list = await asyncio.gather(*parent_list)
+            for index, parent_node in enumerate(parent_list):
+                print(f'{index}: {parent_node.name}')
+            try:
+                choice = input()
+                choice = int(choice)
+                parent = parent_list[choice]
+                await drive.set_node_parent_by_id(node, parent.id_)
+            except Exception as e:
+                print('unknown error, skipped', e)
+                continue
