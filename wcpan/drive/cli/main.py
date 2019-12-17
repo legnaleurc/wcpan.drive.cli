@@ -229,6 +229,9 @@ class UploadQueue(AbstractQueue):
             local_path,
             exist_ok=True,
         )
+        local_size = local_path.stat().st_size
+        if local_size != node.size:
+            raise Exception(f'{local_path} size mismatch')
         local_hash = await self._get_hash(local_path)
         if local_hash != node.hash_:
             raise Exception(f'{local_path} checksum mismatch')
