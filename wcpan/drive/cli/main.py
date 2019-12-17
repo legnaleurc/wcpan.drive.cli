@@ -5,16 +5,20 @@ import concurrent.futures
 import contextlib
 import functools
 import io
+import json
+import math
+import mimetypes
 import os
 import pathlib
 import sys
 
+from PIL import Image
 from wcpan.logger import setup as setup_logger, EXCEPTION, INFO, ERROR
 from wcpan.worker import AsyncQueue
 import yaml
 
 from wcpan.drive.core.drive import DriveFactory, Drive
-from wcpan.drive.core.types import Node, ChangeDict
+from wcpan.drive.core.types import Node, ChangeDict, MediaInfo
 from wcpan.drive.core.abc import Hasher
 from wcpan.drive.core.util import (
     create_executor,
@@ -223,10 +227,12 @@ class UploadQueue(AbstractQueue):
         local_path: pathlib.Path,
         parent_node: Node,
     ) -> Node:
+        media_info = await get_media_info(local_path)
         node = await upload_from_local(
             self.drive,
             parent_node,
             local_path,
+            media_info=media_info,
             exist_ok=True,
         )
         local_size = local_path.stat().st_size
@@ -799,3 +805,47 @@ def print_id_node_dict(data: Any) -> None:
     pairs = sorted(data.items(), key=lambda _: _[1])
     for id_, path in pairs:
         print(f'{id_}: {path}')
+
+
+async def get_media_info(local_path: pathlib.Path) -> MediaInfo:
+    type_, dummy_ext = mimetypes.guess_type(local_path)
+
+    if type_.startswith('image/'):
+        return get_image_info(local_path)
+
+    if type_.startswith('video/'):
+        pass
+
+    return None
+
+
+def get_image_info(local_path: pathlib.Path) -> MediaInfo:
+    image = Image.open(str(local_path))
+    width, height = image.size
+    return MediaInfo.image(width=width, height=height)
+
+
+async def get_video_info(local_path: pathlib.Path) -> MediaInfo:
+    cmd = (
+        'ffprobe',
+        '-v', 'error',
+        '-show_format',
+        '-show_streams',
+        '-select_streams', 'v:0',
+        '-print_format', 'json',
+        '-i', str(local_path),
+    )
+    cp = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    out, dummy_err = await cp.communicate()
+    data = json.loads(out)
+    format_ = data['format']
+    ms_duration = math.floor(float(format_['duration']) * 1000)
+    video = data['streams'][0]
+    width = video['width']
+    height = video['height']
+    return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
