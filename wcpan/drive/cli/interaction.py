@@ -33,6 +33,8 @@ class ShellContext(object):
             'find': self._find,
             'info': self._info,
             'hash': self._hash,
+            'id_to_path': self._id_to_path,
+            'path_to_id': self._path_to_id,
         }
         self._cache = ChildrenCache(drive)
 
@@ -146,6 +148,22 @@ class ShellContext(object):
         rv = self._drive.get_hash_list(self._cwd, args)
         for [path_or_id, hash_] in rv:
             print(f'{hash_} - {path_or_id}')
+
+    def _id_to_path(self, src: str) -> None:
+        node = self._drive.get_node_by_id(src)
+        if not node:
+            print(f'{src} not found')
+            return
+        path = self._drive.get_path(node)
+        print(path)
+
+    def _path_to_id(self, src: str) -> None:
+        path = normalize_path(self._drive, self._cwd, src)
+        node = self._drive.get_node_by_path(path)
+        if not node:
+            print(f'{src} not found')
+            return
+        print(node.id_)
 
 
 class ChildrenCache(object):
