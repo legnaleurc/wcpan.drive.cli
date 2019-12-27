@@ -26,6 +26,7 @@ from .util import (
     trash_node,
     traverse_node,
     wait_for_value,
+    get_usage,
 )
 from .interaction import interact
 
@@ -110,6 +111,15 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     )
     tree_parser.set_defaults(action=action_tree)
     tree_parser.add_argument('id_or_path', type=str)
+
+    usage_parser = commands.add_parser('usage', aliases=['du'],
+        help=(
+            'calculate space usage for files, '
+            'recursively for folders [offline]'
+        ),
+    )
+    usage_parser.set_defaults(action=action_usage)
+    usage_parser.add_argument('id_or_path', type=str, nargs='+')
 
     dl_parser = commands.add_parser('download', aliases=['dl'],
         help='download files/folders',
@@ -248,6 +258,17 @@ async def action_tree(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         node = await get_node_by_id_or_path(drive, args.id_or_path)
         await traverse_node(drive, node, 0)
+    return 0
+
+
+async def action_usage(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        node_list = (get_node_by_id_or_path(drive, _) for _ in args.id_or_path)
+        node_list = await asyncio.gather(*node_list)
+        node_list = (get_usage(drive, _) for _ in node_list)
+        node_list = await asyncio.gather(*node_list)
+    for usage, src in zip(node_list, args.id_or_path):
+        print(f'{usage} - {src}')
     return 0
 
 

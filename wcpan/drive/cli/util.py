@@ -235,3 +235,14 @@ async def get_video_info(local_path: pathlib.Path) -> MediaInfo:
     width = video['width']
     height = video['height']
     return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
+
+
+async def get_usage(drive: Drive, node: Node) -> int:
+    if not node.is_folder:
+        return node.size
+
+    rv = 0
+    async for dummy_root, dummy_folders, files in drive.walk(node):
+        rv += sum((_.size for _ in files))
+
+    return rv
