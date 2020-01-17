@@ -118,8 +118,9 @@ def parse_args(args: List[str]) -> argparse.Namespace:
             'recursively for folders [offline]'
         ),
     )
-    usage_parser.set_defaults(action=action_usage)
     usage_parser.add_argument('id_or_path', type=str, nargs='+')
+    add_bool_argument(usage_parser, 'comma')
+    usage_parser.set_defaults(action=action_usage, comma=False)
 
     dl_parser = commands.add_parser('download', aliases=['dl'],
         help='download files/folders',
@@ -268,7 +269,11 @@ async def action_usage(factory: DriveFactory, args: argparse.Namespace) -> int:
         node_list = (get_usage(drive, _) for _ in node_list)
         node_list = await asyncio.gather(*node_list)
     for usage, src in zip(node_list, args.id_or_path):
-        print(f'{usage} - {src}')
+        if args.comma:
+            label = f'{usage:,}'
+        else:
+            label = f'{usage}'
+        print(f'{label} - {src}')
     return 0
 
 
