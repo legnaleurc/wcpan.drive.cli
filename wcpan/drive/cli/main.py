@@ -305,8 +305,8 @@ async def action_upload(factory: DriveFactory, args: argparse.Namespace) -> int:
             node = await get_node_by_id_or_path(drive, args.id_or_path)
 
             async with UploadQueue(drive, pool, args.jobs) as queue_:
-                src = pathlib.Path(args.source)
-                await queue_.run(src, node)
+                src_list = [pathlib.Path(_) for _ in args.source]
+                await queue_.run(src_list, node)
 
     if not queue_.failed:
         return 0
