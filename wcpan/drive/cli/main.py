@@ -160,7 +160,7 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         help='rename file/folder',
     )
     mv_parser.set_defaults(action=action_rename)
-    mv_parser.add_argument('source_id_or_path', type=str)
+    mv_parser.add_argument('source_id_or_path', type=str, nargs='+')
     mv_parser.add_argument('destination_path', type=str)
 
     shell_parser = commands.add_parser('shell',
@@ -330,10 +330,17 @@ async def action_remove(factory: DriveFactory, args: argparse.Namespace) -> int:
 
 async def action_rename(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
-        node = await get_node_by_id_or_path(drive, args.source_id_or_path)
-        node = await drive.rename_node(node, args.destination_path)
-        path = await drive.get_path(node)
-    return 0 if path else 1
+        async def rename(id_or_path: str, dst: str) -> pathlib.PurePath:
+            node = await get_node_by_id_or_path(drive, id_or_path)
+            path = await drive.get_path(node)
+            return await drive.rename_node_by_path(path, dst)
+
+        node_list = (
+            rename(_, args.destination_path)
+            for _ in args.source_id_or_path
+        )
+        await asyncio.gather(*node_list)
+    return 0
 
 
 async def action_shell(factory: DriveFactory, args: argparse.Namespace) -> int:
