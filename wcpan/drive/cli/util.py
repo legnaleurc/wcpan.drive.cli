@@ -195,6 +195,8 @@ def print_id_node_dict(data: Any) -> None:
 
 async def get_media_info(local_path: pathlib.Path) -> MediaInfo:
     type_, dummy_ext = mimetypes.guess_type(local_path)
+    if not type_:
+        return None
 
     if type_.startswith('image/'):
         return get_image_info(local_path)
