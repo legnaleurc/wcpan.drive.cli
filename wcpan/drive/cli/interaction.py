@@ -28,6 +28,7 @@ class ShellContext(object):
             'help': self._help,
             'ls': self._list,
             'cd': self._chdir,
+            'mkdir': self._mkdir,
             'sync': self._sync,
             'pwd': self._pwd,
             'find': self._find,
@@ -125,6 +126,13 @@ class ShellContext(object):
 
         self._cwd = node
 
+    def _mkdir(self, src: str) -> None:
+        if not src:
+            print(f'invalid name')
+            return
+
+        self._drive.create_folder(self._cwd, src)
+
     def _sync(self) -> None:
         self._cache.reset()
         self._drive.sync()
@@ -205,6 +213,7 @@ class DriveProxy(object):
             'search_by_regex': self._search_by_regex,
             'get_node_by_id': self._get_node_by_id,
             'get_hash_list': self._get_hash_list,
+            'create_folder': self._create_folder,
         }
 
     def __enter__(self) -> 'DriveProxy':
@@ -237,7 +246,12 @@ class DriveProxy(object):
 
                     action = self._actions[task.action]
                     await action(drive, task)
+                except Exception as e:
+                    print(e)
                 finally:
+                    if task:
+                        with task as cv:
+                            cv.notify()
                     self._queue.task_done()
 
     def sync(self) -> None:
@@ -257,9 +271,6 @@ class DriveProxy(object):
             print(change)
         task.return_value = None
 
-        with task as cv:
-            cv.notify()
-
     def get_node_by_path(self, path: pathlib.PurePath) -> Optional[Node]:
         task = OffMainThreadTask(
             action='get_node_by_path',
@@ -276,9 +287,6 @@ class DriveProxy(object):
 
         rv = await drive.get_node_by_path(*task.args, **task.kwargs)
         task.return_value = rv
-
-        with task as cv:
-            cv.notify()
 
     def get_path(self, node: Node) -> pathlib.PurePath:
         task = OffMainThreadTask(
@@ -297,9 +305,6 @@ class DriveProxy(object):
         rv = await drive.get_path(*task.args, **task.kwargs)
         task.return_value = rv
 
-        with task as cv:
-            cv.notify()
-
     def get_children(self, node: Node) -> List[Node]:
         task = OffMainThreadTask(
             action='get_children',
@@ -316,9 +321,6 @@ class DriveProxy(object):
 
         rv = await drive.get_children(*task.args, **task.kwargs)
         task.return_value = rv
-
-        with task as cv:
-            cv.notify()
 
     def search_by_regex(self, pattern: str) -> List[Tuple[str, str]]:
         task = OffMainThreadTask(
@@ -341,9 +343,6 @@ class DriveProxy(object):
         rv = zip(id_list, path_list)
         task.return_value = list(rv)
 
-        with task as cv:
-            cv.notify()
-
     def get_node_by_id(self, id_: str) -> Optional[Node]:
         task = OffMainThreadTask(
             action='get_node_by_id',
@@ -360,9 +359,6 @@ class DriveProxy(object):
 
         rv = await drive.get_node_by_id(*task.args, **task.kwargs)
         task.return_value = rv
-
-        with task as cv:
-            cv.notify()
 
     def get_hash_list(self, cwd: Node, path_or_id_list: List[str]) -> List[Tuple[str, str]]:
         task = OffMainThreadTask(
@@ -391,8 +387,21 @@ class DriveProxy(object):
         rv = zip(path_or_id_list, hash_list)
         task.return_value = list(rv)
 
+    def create_folder(self, node: Node, name: str) -> None:
+        task = OffMainThreadTask(
+            action='create_folder',
+            args=(node, name),
+            kwargs={},
+        )
+        self._queue.put(task)
         with task as cv:
-            cv.notify()
+            cv.wait()
+
+    async def _create_folder(self, drive: Drive, task: 'OffMainThreadTask') -> None:
+        assert_off_main_thread()
+
+        rv = await drive.create_folder(*task.args, **task.kwargs)
+        task.return_value = rv
 
 
 class OffMainThreadTask(object):
