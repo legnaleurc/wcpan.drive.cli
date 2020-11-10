@@ -1,7 +1,6 @@
 from typing import List
 import argparse
 import asyncio
-import concurrent.futures
 import functools
 import io
 import pathlib
@@ -162,6 +161,12 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     mv_parser.set_defaults(action=action_rename)
     mv_parser.add_argument('source_id_or_path', type=str, nargs='+')
     mv_parser.add_argument('destination_path', type=str)
+
+    mkdir_parser = commands.add_parser('mkdir',
+        help='create folder',
+    )
+    mkdir_parser.set_defaults(action=action_mkdir)
+    mkdir_parser.add_argument('path', type=str)
 
     shell_parser = commands.add_parser('shell',
         help='start an interactive shell',
@@ -340,6 +345,16 @@ async def action_rename(factory: DriveFactory, args: argparse.Namespace) -> int:
             for _ in args.source_id_or_path
         )
         await asyncio.gather(*node_list)
+    return 0
+
+
+async def action_mkdir(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        path = pathlib.PurePath(args.path)
+        parent_path = path.parent
+        name = path.name
+        parent_node = await drive.get_node_by_path(parent_path)
+        await drive.create_folder(parent_node, name, exist_ok=True)
     return 0
 
 
