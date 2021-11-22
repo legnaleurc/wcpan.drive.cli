@@ -17,15 +17,17 @@ from wcpan.drive.core.util import (
 
 from .queue_ import DownloadQueue, UploadQueue
 from .util import (
-    UploadVerifier,
     chunks_of,
     get_node_by_id_or_path,
+    get_usage,
+    get_utc_now,
+    humanize,
     print_as_yaml,
     print_id_node_dict,
     trash_node,
     traverse_node,
+    UploadVerifier,
     wait_for_value,
-    get_usage,
 )
 from .interaction import interact
 
@@ -185,6 +187,9 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         help='check file system error'
     )
     d_parser.set_defaults(action=action_doctor)
+
+    q_parser = commands.add_parser('quota', help='check upload quota')
+    q_parser.set_defaults(action=action_quota)
 
     sout = io.StringIO()
     parser.print_help(sout)
@@ -402,3 +407,20 @@ async def action_doctor(factory: DriveFactory, args: argparse.Namespace) -> int:
             except Exception as e:
                 print('unknown error, skipped', e)
                 continue
+
+
+async def action_quota(factory: DriveFactory, args: argparse.Namespace) -> int:
+    SECONDS_PER_HOUR = 60 * 60
+    SECONDS_PER_DAY = SECONDS_PER_HOUR * 24
+    async with factory() as drive:
+        now = get_utc_now()
+        yesterday = int(now.timestamp()) - SECONDS_PER_DAY
+        total = 0
+        for h in range(24):
+            begin = yesterday + h * SECONDS_PER_HOUR
+            end = begin + SECONDS_PER_HOUR
+            size = await drive.get_uploaded_size(begin, end)
+            total += size
+            print(humanize(size))
+        print(f'Total: {humanize(total)}')
+    return 0

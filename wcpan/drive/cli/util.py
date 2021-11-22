@@ -1,6 +1,7 @@
 from typing import List, AsyncGenerator, Optional, Tuple, Any
 import asyncio
 import concurrent.futures
+import datetime
 import json
 import math
 import mimetypes
@@ -248,3 +249,16 @@ async def get_usage(drive: Drive, node: Node) -> int:
         rv += sum((_.size for _ in files))
 
     return rv
+
+
+def get_utc_now() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def humanize(n: int) -> str:
+    UNIT_LIST = ['', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+    e = 0
+    while n >= 1024:
+        n = n // 1024
+        e += 1
+    return f'{n}{UNIT_LIST[e]}'
