@@ -25,27 +25,19 @@ class AbstractQueue(object):
         pool: concurrent.futures.Executor,
         jobs: int,
     ) -> None:
-        self._drive = drive
+        self.drive = drive
+        self.failed = []
         self._queue = AsyncQueue(jobs)
         self._pool = pool
         self._counter = 0
         self._table = {}
         self._total = 0
-        self._failed = []
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> 'AbstractQueue':
         return self
 
     async def __aexit__(self, et, ev, tb) -> bool:
         await self._queue.shutdown()
-
-    @property
-    def drive(self) -> Drive:
-        return self._drive
-
-    @property
-    def failed(self) -> bool:
-        return self._failed
 
     async def run(self,
         src_list: List[pathlib.Path],
@@ -138,7 +130,7 @@ class AbstractQueue(object):
         return rv
 
     def _add_failed(self, src: str) -> None:
-        self._failed.append(src)
+        self.failed.append(src)
 
     @contextlib.asynccontextmanager
     async def _log_guard(self, src: pathlib.Path) -> AsyncGenerator[None, None]:
