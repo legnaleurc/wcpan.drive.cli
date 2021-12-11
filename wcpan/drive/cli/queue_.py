@@ -1,24 +1,26 @@
-from typing import List, Optional, AsyncGenerator
 import asyncio
 import concurrent.futures
 import contextlib
 import functools
 import os
 import pathlib
+from typing import Generic, List, Optional, TypeVar
 
-from wcpan.drive.core.drive import Drive
-from wcpan.drive.core.types import Node
-from wcpan.drive.core.util import (
+from wcpan.drive.core.drive import (
+    Drive,
     download_to_local,
     upload_from_local,
 )
+from wcpan.drive.core.types import Node
 from wcpan.logger import EXCEPTION, INFO
 from wcpan.worker import AsyncQueue
 
 from .util import get_hash, get_media_info
 
 
-class AbstractQueue(object):
+SrcT = TypeVar('SrcT')
+DstT = TypeVar('DstT')
+class AbstractQueue(Generic[SrcT, DstT]):
 
     def __init__(self,
         drive: Drive,
@@ -39,9 +41,19 @@ class AbstractQueue(object):
     async def __aexit__(self, et, ev, tb) -> bool:
         await self._queue.shutdown()
 
+    async def get_local_file_hash(self, local_path: pathlib.Path) -> str:
+        hasher = await self.drive.get_hasher()
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            self._pool,
+            get_hash,
+            local_path,
+            hasher,
+        )
+
     async def run(self,
-        src_list: List[pathlib.Path],
-        dst: pathlib.Path,
+        src_list: List[SrcT],
+        dst: DstT,
     ) -> None:
         if not src_list:
             return
@@ -55,37 +67,28 @@ class AbstractQueue(object):
             self._queue.post(fn)
         await self._queue.join()
 
-    async def count_tasks(self, src: pathlib.Path) -> int:
+    async def count_tasks(self, src: SrcT) -> int:
         raise NotImplementedError()
 
-    def source_is_folder(self, src: pathlib.Path) -> bool:
+    def source_is_folder(self, src: SrcT) -> bool:
         raise NotImplementedError()
 
-    async def do_folder(self,
-        src: pathlib.Path,
-        dst: pathlib.Path,
-    ) -> Optional[pathlib.Path]:
+    async def do_folder(self, src: SrcT, dst: DstT) -> Optional[DstT]:
         raise NotImplementedError()
 
-    async def get_children(self, src: pathlib.Path) -> List[pathlib.Path]:
+    async def get_children(self, src: SrcT) -> List[SrcT]:
         raise NotImplementedError()
 
-    async def do_file(self,
-        src: pathlib.Path,
-        dst: pathlib.Path,
-    ) -> Optional[pathlib.Path]:
+    async def do_file(self, src: SrcT, dst: DstT) -> Optional[DstT]:
         raise NotImplementedError()
 
-    def get_source_hash(self, src: pathlib.Path) -> str:
+    def get_source_hash(self, src: SrcT) -> str:
         raise NotImplementedError()
 
-    async def get_source_display(self, src: pathlib.Path) -> str:
+    async def get_source_display(self, src: SrcT) -> str:
         raise NotImplementedError()
 
-    async def _run_one_task(self,
-        src: pathlib.Path,
-        dst: pathlib.Path,
-    ) -> Optional[pathlib.Path]:
+    async def _run_one_task(self, src: SrcT, dst: DstT) -> Optional[DstT]:
         self._update_counter_table(src)
         async with self._log_guard(src):
             if self.source_is_folder(src):
@@ -94,10 +97,7 @@ class AbstractQueue(object):
                 rv = await self._run_for_file(src, dst)
         return rv
 
-    async def _run_for_folder(self,
-        src: pathlib.Path,
-        dst: pathlib.Path,
-    ) -> Optional[pathlib.Path]:
+    async def _run_for_folder(self, src: SrcT, dst: DstT) -> Optional[DstT]:
         try:
             rv = await self.do_folder(src, dst)
         except Exception as e:
@@ -116,10 +116,7 @@ class AbstractQueue(object):
 
         return rv
 
-    async def _run_for_file(self,
-        src: pathlib.Path,
-        dst: pathlib.Path,
-    ) -> Optional[pathlib.Path]:
+    async def _run_for_file(self, src: SrcT, dst: DstT) -> Optional[DstT]:
         try:
             rv = await self.do_file(src, dst)
         except Exception as e:
@@ -133,37 +130,27 @@ class AbstractQueue(object):
         self.failed.append(src)
 
     @contextlib.asynccontextmanager
-    async def _log_guard(self, src: pathlib.Path) -> AsyncGenerator[None, None]:
+    async def _log_guard(self, src: SrcT):
         await self._log('begin', src)
         try:
             yield
         finally:
             await self._log('end', src)
 
-    async def _log(self, begin_or_end: str, src: pathlib.Path) -> None:
+    async def _log(self, begin_or_end: str, src: SrcT) -> None:
         progress = self._get_progress(src)
         display = await self.get_source_display(src)
         INFO('wcpan.drive.cli') << f'{progress} {begin_or_end} {display}'
 
-    def _get_progress(self, src: pathlib.Path) -> str:
+    def _get_progress(self, src: SrcT) -> str:
         key = self.get_source_hash(src)
         id_ = self._table[key]
         return f'[{id_}/{self._total}]'
 
-    def _update_counter_table(self, src: pathlib.Path) -> None:
+    def _update_counter_table(self, src: SrcT) -> None:
         key = self.get_source_hash(src)
         self._counter += 1
         self._table[key] = self._counter
-
-    async def _get_hash(self, local_path: pathlib.Path) -> str:
-        hasher = await self.drive.get_hasher()
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(
-            self._pool,
-            get_hash,
-            local_path,
-            hasher,
-        )
 
 
 class UploadQueue(AbstractQueue):
@@ -218,7 +205,7 @@ class UploadQueue(AbstractQueue):
         local_size = local_path.stat().st_size
         if local_size != node.size:
             raise Exception(f'{local_path} size mismatch')
-        local_hash = await self._get_hash(local_path)
+        local_hash = await self.get_local_file_hash(local_path)
         if local_hash != node.hash_:
             raise Exception(f'{local_path} checksum mismatch')
         return node
@@ -265,7 +252,7 @@ class DownloadQueue(AbstractQueue):
         local_path: pathlib.Path,
     ) -> pathlib.Path:
         local_path = await download_to_local(self.drive, node, local_path)
-        local_hash = await self._get_hash(local_path)
+        local_hash = await self.get_local_file_hash(local_path)
         if local_hash != node.hash_:
             raise Exception(f'{local_path} checksum mismatch')
         return local_path
