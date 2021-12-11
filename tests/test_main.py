@@ -2,9 +2,11 @@ from contextlib import AsyncExitStack
 from io import StringIO
 from pathlib import PurePath
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from wcpan.drive.cli.main import main
+
+from .util import setup_drive_factory
 
 
 class TestMain(IsolatedAsyncioTestCase):
@@ -34,12 +36,3 @@ class TestMain(IsolatedAsyncioTestCase):
         path = PurePath('/var/log')
         self._drive.get_node_by_path.assert_called_once_with(path.parent)
         self._drive.create_folder.assert_called_once_with(parent_node, path.name, exist_ok=True)
-
-
-def setup_drive_factory(FakeDriveFactory: MagicMock) -> None:
-    fake_drive = AsyncMock()
-    FakeDriveFactory.return_value = MagicMock(return_value=fake_drive)
-    fake_drive.configure_mock(**{
-        '__aenter__.return_value': fake_drive,
-    })
-    return fake_drive
