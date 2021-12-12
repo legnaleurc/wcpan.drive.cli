@@ -15,6 +15,7 @@ from wcpan.drive.core.util import (
     get_default_data_path,
 )
 
+from . import __version__ as VERSION
 from .queue_ import DownloadQueue, UploadQueue
 from .util import (
     chunks_of,
@@ -55,6 +56,11 @@ async def main(args: List[str] = None) -> int:
 
 def parse_args(args: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser('wcpan.drive.cli')
+
+    parser.add_argument('--version', '-v',
+        action='version',
+        version=f'wcpan.drive.cli {VERSION}',
+    )
 
     parser.add_argument('--config-prefix',
         default=get_default_config_path(),
