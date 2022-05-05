@@ -1,4 +1,3 @@
-from typing import List
 import argparse
 import asyncio
 import functools
@@ -25,6 +24,7 @@ from .util import (
     humanize,
     print_as_yaml,
     print_id_node_dict,
+    require_authorized,
     trash_node,
     traverse_node,
     UploadVerifier,
@@ -33,7 +33,7 @@ from .util import (
 from .interaction import interact
 
 
-async def main(args: List[str] = None) -> int:
+async def main(args: list[str] = None) -> int:
     if args is None:
         args = sys.argv
 
@@ -54,7 +54,7 @@ async def main(args: List[str] = None) -> int:
     return await args.action(factory, args)
 
 
-def parse_args(args: List[str]) -> argparse.Namespace:
+def parse_args(args: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser('wcpan.drive.cli')
 
     parser.add_argument('--version', '-v',
@@ -78,6 +78,11 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     )
 
     commands = parser.add_subparsers()
+
+    auth_parser = commands.add_parser('auth', aliases=['a'],
+        help='authorize user',
+    )
+    auth_parser.set_defaults(action=action_auth)
 
     sync_parser = commands.add_parser('sync', aliases=['s'],
         help='synchronize database',
@@ -225,6 +230,18 @@ async def action_help(message: str) -> None:
     print(message)
 
 
+async def action_auth(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        url = await drive.get_oauth_url()
+        print('Access the following URL to authorize user:\n')
+        print(url)
+        print('')
+        print('Paste the redireced URL or provided code here:')
+        answer = input('')
+        await drive.set_oauth_token(answer)
+
+
+@require_authorized
 async def action_sync(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         chunks = chunks_of(drive.sync(check_point=args.from_), 100)
@@ -293,6 +310,7 @@ async def action_usage(factory: DriveFactory, args: argparse.Namespace) -> int:
     return 0
 
 
+@require_authorized
 async def action_download(
     factory: DriveFactory,
     args: argparse.Namespace,
@@ -315,6 +333,7 @@ async def action_download(
     return 1
 
 
+@require_authorized
 async def action_upload(factory: DriveFactory, args: argparse.Namespace) -> int:
     with create_executor() as pool:
         async with factory(pool=pool) as drive:
@@ -331,6 +350,7 @@ async def action_upload(factory: DriveFactory, args: argparse.Namespace) -> int:
     return 1
 
 
+@require_authorized
 async def action_remove(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         rv = (trash_node(drive, _) for _ in args.id_or_path)
@@ -344,6 +364,7 @@ async def action_remove(factory: DriveFactory, args: argparse.Namespace) -> int:
     return 1
 
 
+@require_authorized
 async def action_rename(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         async def rename(id_or_path: str, dst: str) -> pathlib.PurePath:
@@ -359,6 +380,7 @@ async def action_rename(factory: DriveFactory, args: argparse.Namespace) -> int:
     return 0
 
 
+@require_authorized
 async def action_mkdir(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         path = pathlib.PurePath(args.path)

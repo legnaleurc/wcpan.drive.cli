@@ -1,17 +1,19 @@
-from typing import List, AsyncGenerator, Optional, Tuple, Any
 import asyncio
 import concurrent.futures
 import datetime
+import functools
 import json
 import math
 import mimetypes
 import pathlib
 import sys
+from typing import AsyncGenerator, Optional, Any
 
 from PIL import Image
 from wcpan.drive.core.abc import Hasher
 from wcpan.drive.core.drive import Drive
 from wcpan.drive.core.types import Node, ChangeDict, MediaInfo
+from wcpan.drive.core.exceptions import UnauthorizedError
 from wcpan.logger import ERROR, INFO, EXCEPTION
 import yaml
 
@@ -144,7 +146,7 @@ async def trash_node(drive: Drive, id_or_path: str) -> Optional[str]:
     return None
 
 
-async def wait_for_value(k, v) -> Tuple[str, Any]:
+async def wait_for_value(k, v) -> tuple[str, Any]:
     return k, await v
 
 
@@ -162,7 +164,7 @@ def get_hash(local_path: pathlib.Path, hasher: Hasher) -> str:
 async def chunks_of(
     ag: AsyncGenerator[ChangeDict, None],
     size: int,
-) -> AsyncGenerator[List[ChangeDict], None]:
+) -> AsyncGenerator[list[ChangeDict], None]:
     chunk = []
     async for item in ag:
         chunk.append(item)
@@ -262,3 +264,14 @@ def humanize(n: int) -> str:
         n = n // 1024
         e += 1
     return f'{n}{UNIT_LIST[e]}'
+
+
+def require_authorized(fn):
+    @functools.wraps(fn)
+    async def action(*args, **kwargs):
+        try:
+            return await fn(*args, **kwargs)
+        except UnauthorizedError:
+            print('not authorized')
+            return 1
+    return action
