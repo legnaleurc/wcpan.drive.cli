@@ -4,7 +4,7 @@ import contextlib
 import functools
 import os
 import pathlib
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from wcpan.drive.core.drive import (
     Drive,
@@ -52,7 +52,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
         )
 
     async def run(self,
-        src_list: List[SrcT],
+        src_list: list[SrcT],
         dst: DstT,
     ) -> None:
         if not src_list:
@@ -76,7 +76,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
     async def do_folder(self, src: SrcT, dst: DstT) -> Optional[DstT]:
         raise NotImplementedError()
 
-    async def get_children(self, src: SrcT) -> List[SrcT]:
+    async def get_children(self, src: SrcT) -> list[SrcT]:
         raise NotImplementedError()
 
     async def do_file(self, src: SrcT, dst: DstT) -> Optional[DstT]:
@@ -185,7 +185,7 @@ class UploadQueue(AbstractQueue):
 
     async def get_children(self,
         local_path: pathlib.Path,
-    ) -> List[pathlib.Path]:
+    ) -> list[pathlib.Path]:
         rv = os.listdir(local_path)
         rv = [local_path / _ for _ in rv]
         return rv
@@ -244,7 +244,7 @@ class DownloadQueue(AbstractQueue):
         os.makedirs(full_path, exist_ok=True)
         return full_path
 
-    async def get_children(self, node: Node) -> List[Node]:
+    async def get_children(self, node: Node) -> list[Node]:
         return await self.drive.get_children(node)
 
     async def do_file(self,

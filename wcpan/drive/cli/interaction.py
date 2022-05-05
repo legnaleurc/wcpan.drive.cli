@@ -1,4 +1,4 @@
-from typing import Optional, List, Any, Dict, Tuple
+from typing import Optional, Any
 import asyncio
 import contextlib
 import enum
@@ -81,12 +81,12 @@ class ShellContext(object):
         except TypeError as e:
             print(e)
 
-    def _get_global(self, prefix: str) -> List[str]:
+    def _get_global(self, prefix: str) -> list[str]:
         cmd = self._actions.keys()
         cmd = [c for c in cmd if c.startswith(prefix)]
         return cmd
 
-    def _get_path(self, prefix: str, path: str) -> List[str]:
+    def _get_path(self, prefix: str, path: str) -> list[str]:
         children = self._cache.get(self._cwd, path)
         children = [c for c in children if c.startswith(prefix)]
         return children
@@ -180,7 +180,7 @@ class ChildrenCache(object):
         self._drive = drive
         self._cache = {}
 
-    def get(self, cwd: Node, src: str) -> List[str]:
+    def get(self, cwd: Node, src: str) -> list[str]:
         key = f'{cwd.id_}:{src}'
         if key in self._cache:
             return self._cache[key]
@@ -305,7 +305,7 @@ class DriveProxy(object):
         rv = await drive.get_path(*task.args, **task.kwargs)
         task.return_value = rv
 
-    def get_children(self, node: Node) -> List[Node]:
+    def get_children(self, node: Node) -> list[Node]:
         task = OffMainThreadTask(
             action='get_children',
             args=(node,),
@@ -322,7 +322,7 @@ class DriveProxy(object):
         rv = await drive.get_children(*task.args, **task.kwargs)
         task.return_value = rv
 
-    def search_by_regex(self, pattern: str) -> List[Tuple[str, str]]:
+    def search_by_regex(self, pattern: str) -> list[tuple[str, str]]:
         task = OffMainThreadTask(
             action='search_by_regex',
             args=(pattern,),
@@ -360,7 +360,7 @@ class DriveProxy(object):
         rv = await drive.get_node_by_id(*task.args, **task.kwargs)
         task.return_value = rv
 
-    def get_hash_list(self, cwd: Node, path_or_id_list: List[str]) -> List[Tuple[str, str]]:
+    def get_hash_list(self, cwd: Node, path_or_id_list: list[str]) -> list[tuple[str, str]]:
         task = OffMainThreadTask(
             action='get_hash_list',
             args=(cwd, path_or_id_list,),
@@ -406,7 +406,7 @@ class DriveProxy(object):
 
 class OffMainThreadTask(object):
 
-    def __init__(self, action: str, args: Tuple[Any], kwargs=Dict[str, Any]) -> None:
+    def __init__(self, action: str, args: tuple[Any], kwargs=dict[str, Any]) -> None:
         self._action = action
         self._args = args
         self._kwargs = kwargs
@@ -428,11 +428,11 @@ class OffMainThreadTask(object):
         return self._action
 
     @property
-    def args(self) -> Tuple[Any]:
+    def args(self) -> tuple[Any]:
         return self._args
 
     @property
-    def kwargs(self) -> Dict[str, Any]:
+    def kwargs(self) -> dict[str, Any]:
         return self._kwargs
 
 
