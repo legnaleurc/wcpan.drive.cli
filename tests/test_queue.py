@@ -9,8 +9,6 @@ from wcpan.drive.core.test import test_factory, TestDriver
 from wcpan.drive.core.util import create_executor
 from wcpan.drive.cli.queue_ import DownloadQueue, UploadQueue
 
-from .util import FakeHasher
-
 
 class TestQueue(IsolatedAsyncioTestCase):
 
@@ -100,7 +98,6 @@ async def upload_context(jobs: int):
 
         with test_factory() as factory:
             async with factory(pool=pool) as drive:
-                drive.remote.mock.get_hasher.return_value = FakeHasher()
                 async for changes in drive.sync():
                     pass
 
@@ -115,7 +112,6 @@ async def download_context(jobs: int):
             async with factory(pool=pool) as drive:
                 driver: TestDriver = drive.remote
 
-                driver.mock.get_hasher.return_value = FakeHasher()
                 async for changes in drive.sync():
                     pass
 
