@@ -181,6 +181,15 @@ def parse_args(args: list[str]) -> argparse.Namespace:
     mkdir_parser.set_defaults(action=action_mkdir)
     mkdir_parser.add_argument('path', type=str)
 
+    trash_parser = commands.add_parser('trash',
+        help='list trash can',
+    )
+    add_bool_argument(trash_parser, 'flatten')
+    trash_parser.set_defaults(
+        action=action_trash,
+        flatten=False,
+    )
+
     shell_parser = commands.add_parser('shell',
         help='start an interactive shell',
     )
@@ -388,6 +397,18 @@ async def action_mkdir(factory: DriveFactory, args: argparse.Namespace) -> int:
         name = path.name
         parent_node = await drive.get_node_by_path(parent_path)
         await drive.create_folder(parent_node, name, exist_ok=True)
+    return 0
+
+
+async def action_trash(factory: DriveFactory, args: argparse.Namespace) -> int:
+    async with factory() as drive:
+        node_list = await drive.get_trashed_nodes(args.flatten)
+        rv = [{
+            'id': _.id_,
+            'name': _.name,
+            'modified': str(_.modified),
+        } for _ in node_list]
+        print_as_yaml(rv)
     return 0
 
 
