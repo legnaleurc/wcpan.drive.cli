@@ -15,8 +15,8 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-Pillow = "^8.0"
-PyYAML = "^5.3"
+Pillow = "^9.0"
+PyYAML = "^6.0"
 "wcpan.drive.core" = "^3.1.0"
 "wcpan.logger" = "^1.2"
 "wcpan.worker" = "^5.0"
