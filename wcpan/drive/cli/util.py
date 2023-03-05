@@ -7,7 +7,7 @@ import math
 import mimetypes
 import pathlib
 import sys
-from typing import AsyncGenerator, Optional, Any
+from typing import AsyncGenerator, Any
 
 from PIL import Image
 from wcpan.drive.core.abc import Hasher
@@ -131,7 +131,7 @@ async def traverse_node(drive: Drive, node: Node, level: int) -> None:
             await traverse_node(drive, child, level + 1)
 
 
-async def trash_node(drive: Drive, id_or_path: str) -> Optional[str]:
+async def trash_node(drive: Drive, id_or_path: str) -> str | None:
     '''
     :returns: None if succeed, id_or_path if failed
     '''

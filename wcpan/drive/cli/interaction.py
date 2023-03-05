@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any
 import asyncio
 import contextlib
 import enum
@@ -46,7 +46,7 @@ class ShellContext(object):
             name = self._cwd.name
         return f'{name} > '
 
-    def complete(self, text: str, state: int) -> Optional[str]:
+    def complete(self, text: str, state: int) -> str | None:
         import readline
         whole_text = readline.get_line_buffer()
         end_index = readline.get_endidx()
@@ -271,7 +271,7 @@ class DriveProxy(object):
             print(change)
         task.return_value = None
 
-    def get_node_by_path(self, path: pathlib.PurePath) -> Optional[Node]:
+    def get_node_by_path(self, path: pathlib.PurePath) -> Node | None:
         task = OffMainThreadTask(
             action='get_node_by_path',
             args=(path,),
@@ -343,7 +343,7 @@ class DriveProxy(object):
         rv = zip(id_list, path_list)
         task.return_value = list(rv)
 
-    def get_node_by_id(self, id_: str) -> Optional[Node]:
+    def get_node_by_id(self, id_: str) -> Node | None:
         task = OffMainThreadTask(
             action='get_node_by_id',
             args=(id_,),

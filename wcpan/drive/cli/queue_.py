@@ -4,7 +4,7 @@ import contextlib
 import functools
 import os
 import pathlib
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from wcpan.drive.core.drive import (
     Drive,
@@ -73,13 +73,13 @@ class AbstractQueue(Generic[SrcT, DstT]):
     def source_is_folder(self, src: SrcT) -> bool:
         raise NotImplementedError()
 
-    async def do_folder(self, src: SrcT, dst: DstT) -> Optional[DstT]:
+    async def do_folder(self, src: SrcT, dst: DstT) -> DstT | None:
         raise NotImplementedError()
 
     async def get_children(self, src: SrcT) -> list[SrcT]:
         raise NotImplementedError()
 
-    async def do_file(self, src: SrcT, dst: DstT) -> Optional[DstT]:
+    async def do_file(self, src: SrcT, dst: DstT) -> DstT | None:
         raise NotImplementedError()
 
     def get_source_hash(self, src: SrcT) -> str:
@@ -88,7 +88,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
     async def get_source_display(self, src: SrcT) -> str:
         raise NotImplementedError()
 
-    async def _run_one_task(self, src: SrcT, dst: DstT) -> Optional[DstT]:
+    async def _run_one_task(self, src: SrcT, dst: DstT) -> DstT | None:
         self._update_counter_table(src)
         async with self._log_guard(src):
             if self.source_is_folder(src):
@@ -97,7 +97,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
                 rv = await self._run_for_file(src, dst)
         return rv
 
-    async def _run_for_folder(self, src: SrcT, dst: DstT) -> Optional[DstT]:
+    async def _run_for_folder(self, src: SrcT, dst: DstT) -> DstT | None:
         try:
             rv = await self.do_folder(src, dst)
         except Exception as e:
@@ -116,7 +116,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
 
         return rv
 
-    async def _run_for_file(self, src: SrcT, dst: DstT) -> Optional[DstT]:
+    async def _run_for_file(self, src: SrcT, dst: DstT) -> DstT | None:
         try:
             rv = await self.do_file(src, dst)
         except Exception as e:
