@@ -37,9 +37,7 @@ async def main(args: list[str] = None) -> int:
     if args is None:
         args = sys.argv
 
-    setup_logger((
-        'wcpan.drive',
-    ))
+    setup_logger(("wcpan.drive",))
 
     args = parse_args(args[1:])
     if not args.action:
@@ -55,160 +53,182 @@ async def main(args: list[str] = None) -> int:
 
 
 def parse_args(args: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser('wcpan.drive.cli')
+    parser = argparse.ArgumentParser("wcpan.drive.cli")
 
-    parser.add_argument('--version', '-v',
-        action='version',
-        version=f'wcpan.drive.cli {VERSION}',
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version=f"wcpan.drive.cli {VERSION}",
     )
 
-    parser.add_argument('--config-prefix',
+    parser.add_argument(
+        "--config-prefix",
         default=get_default_config_path(),
-        help=(
-            'specify configuration file path'
-            ' (default: %(default)s)'
-        ),
+        help=("specify configuration file path" " (default: %(default)s)"),
     )
-    parser.add_argument('--data-prefix',
+    parser.add_argument(
+        "--data-prefix",
         default=get_default_data_path(),
-        help=(
-            'specify data file path'
-            ' (default: %(default)s)'
-        ),
+        help=("specify data file path" " (default: %(default)s)"),
     )
 
     commands = parser.add_subparsers()
 
-    auth_parser = commands.add_parser('auth', aliases=['a'],
-        help='authorize user',
+    auth_parser = commands.add_parser(
+        "auth",
+        aliases=["a"],
+        help="authorize user",
     )
     auth_parser.set_defaults(action=action_auth)
 
-    sync_parser = commands.add_parser('sync', aliases=['s'],
-        help='synchronize database',
+    sync_parser = commands.add_parser(
+        "sync",
+        aliases=["s"],
+        help="synchronize database",
     )
-    add_bool_argument(sync_parser, 'verbose', 'v')
-    sync_parser.add_argument('-f', '--from', type=int, dest='from_',
+    add_bool_argument(sync_parser, "verbose", "v")
+    sync_parser.add_argument(
+        "-f",
+        "--from",
+        type=int,
+        dest="from_",
         default=None,
         help=(
-            'synchronize from certain check point, and do not update cache'
-            ' (default: %(default)s)'
+            "synchronize from certain check point, and do not update cache"
+            " (default: %(default)s)"
         ),
     )
     sync_parser.set_defaults(action=action_sync)
 
-    find_parser = commands.add_parser('find', aliases=['f'],
-        help='find files/folders by pattern [offline]',
+    find_parser = commands.add_parser(
+        "find",
+        aliases=["f"],
+        help="find files/folders by pattern [offline]",
     )
-    add_bool_argument(find_parser, 'id_only')
-    add_bool_argument(find_parser, 'include_trash')
-    find_parser.add_argument('pattern', type=str)
-    find_parser.set_defaults(action=action_find, id_only=False,
-                             include_trash=False)
+    add_bool_argument(find_parser, "id_only")
+    add_bool_argument(find_parser, "include_trash")
+    find_parser.add_argument("pattern", type=str)
+    find_parser.set_defaults(action=action_find, id_only=False, include_trash=False)
 
-    info_parser = commands.add_parser('info', aliases=['i'],
-        help='display file information [offline]',
+    info_parser = commands.add_parser(
+        "info",
+        aliases=["i"],
+        help="display file information [offline]",
     )
     info_parser.set_defaults(action=action_info)
-    info_parser.add_argument('id_or_path', type=str)
+    info_parser.add_argument("id_or_path", type=str)
 
-    list_parser = commands.add_parser('list', aliases=['ls'],
-        help='list folder [offline]',
+    list_parser = commands.add_parser(
+        "list",
+        aliases=["ls"],
+        help="list folder [offline]",
     )
     list_parser.set_defaults(action=action_list)
-    list_parser.add_argument('id_or_path', type=str)
+    list_parser.add_argument("id_or_path", type=str)
 
-    tree_parser = commands.add_parser('tree',
-        help='recursive list folder [offline]',
+    tree_parser = commands.add_parser(
+        "tree",
+        help="recursive list folder [offline]",
     )
     tree_parser.set_defaults(action=action_tree)
-    tree_parser.add_argument('id_or_path', type=str)
+    tree_parser.add_argument("id_or_path", type=str)
 
-    usage_parser = commands.add_parser('usage', aliases=['du'],
-        help=(
-            'calculate space usage for files, '
-            'recursively for folders [offline]'
-        ),
+    usage_parser = commands.add_parser(
+        "usage",
+        aliases=["du"],
+        help=("calculate space usage for files, " "recursively for folders [offline]"),
     )
-    usage_parser.add_argument('id_or_path', type=str, nargs='+')
-    add_bool_argument(usage_parser, 'comma')
+    usage_parser.add_argument("id_or_path", type=str, nargs="+")
+    add_bool_argument(usage_parser, "comma")
     usage_parser.set_defaults(action=action_usage, comma=False)
 
-    dl_parser = commands.add_parser('download', aliases=['dl'],
-        help='download files/folders',
+    dl_parser = commands.add_parser(
+        "download",
+        aliases=["dl"],
+        help="download files/folders",
     )
     dl_parser.set_defaults(action=action_download)
-    dl_parser.add_argument('-j', '--jobs', type=int,
+    dl_parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
         default=1,
-        help=(
-            'maximum simultaneously download jobs'
-            ' (default: %(default)s)'
-        ),
+        help=("maximum simultaneously download jobs" " (default: %(default)s)"),
     )
-    dl_parser.add_argument('id_or_path', type=str, nargs='+')
-    dl_parser.add_argument('destination', type=str)
+    dl_parser.add_argument("id_or_path", type=str, nargs="+")
+    dl_parser.add_argument("destination", type=str)
 
-    ul_parser = commands.add_parser('upload', aliases=['ul'],
-        help='upload files/folders',
+    ul_parser = commands.add_parser(
+        "upload",
+        aliases=["ul"],
+        help="upload files/folders",
     )
     ul_parser.set_defaults(action=action_upload)
-    ul_parser.add_argument('-j', '--jobs', type=int,
+    ul_parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
         default=1,
-        help=(
-            'maximum simultaneously upload jobs'
-            ' (default: %(default)s)'
-        ),
+        help=("maximum simultaneously upload jobs" " (default: %(default)s)"),
     )
-    ul_parser.add_argument('source', type=str, nargs='+')
-    ul_parser.add_argument('id_or_path', type=str)
+    ul_parser.add_argument("source", type=str, nargs="+")
+    ul_parser.add_argument("id_or_path", type=str)
 
-    rm_parser = commands.add_parser('remove', aliases=['rm'],
-        help='trash files/folders',
+    rm_parser = commands.add_parser(
+        "remove",
+        aliases=["rm"],
+        help="trash files/folders",
     )
     rm_parser.set_defaults(action=action_remove)
-    rm_parser.add_argument('id_or_path', type=str, nargs='+')
+    rm_parser.add_argument("id_or_path", type=str, nargs="+")
 
-    mv_parser = commands.add_parser('rename', aliases=['mv'],
-        help='rename file/folder',
+    mv_parser = commands.add_parser(
+        "rename",
+        aliases=["mv"],
+        help="rename file/folder",
     )
     mv_parser.set_defaults(action=action_rename)
-    mv_parser.add_argument('source_id_or_path', type=str, nargs='+')
-    mv_parser.add_argument('destination_path', type=str)
+    mv_parser.add_argument("source_id_or_path", type=str, nargs="+")
+    mv_parser.add_argument("destination_path", type=str)
 
-    mkdir_parser = commands.add_parser('mkdir',
-        help='create folder',
+    mkdir_parser = commands.add_parser(
+        "mkdir",
+        help="create folder",
     )
     mkdir_parser.set_defaults(action=action_mkdir)
-    mkdir_parser.add_argument('path', type=str)
+    mkdir_parser.add_argument("path", type=str)
 
-    trash_parser = commands.add_parser('trash',
-        help='list trash can',
+    trash_parser = commands.add_parser(
+        "trash",
+        help="list trash can",
     )
-    add_bool_argument(trash_parser, 'flatten')
+    add_bool_argument(trash_parser, "flatten")
     trash_parser.set_defaults(
         action=action_trash,
         flatten=False,
     )
 
-    shell_parser = commands.add_parser('shell',
-        help='start an interactive shell',
+    shell_parser = commands.add_parser(
+        "shell",
+        help="start an interactive shell",
     )
     shell_parser.set_defaults(action=action_shell)
-    shell_parser.add_argument('id_or_path', type=str, nargs='?')
+    shell_parser.add_argument("id_or_path", type=str, nargs="?")
 
-    v_parser = commands.add_parser('verify', aliases=['v'],
-        help='verify uploaded files/folders',
+    v_parser = commands.add_parser(
+        "verify",
+        aliases=["v"],
+        help="verify uploaded files/folders",
     )
     v_parser.set_defaults(action=action_verify)
-    v_parser.add_argument('source', type=str, nargs='+')
-    v_parser.add_argument('id_or_path', type=str)
+    v_parser.add_argument("source", type=str, nargs="+")
+    v_parser.add_argument("id_or_path", type=str)
 
-    d_parser = commands.add_parser('doctor',
-        help='check file system error'
-    )
+    d_parser = commands.add_parser("doctor", help="check file system error")
     d_parser.set_defaults(action=action_doctor)
 
-    q_parser = commands.add_parser('quota', help='check upload quota')
+    q_parser = commands.add_parser("quota", help="check upload quota")
     q_parser.set_defaults(action=action_quota)
 
     sout = io.StringIO()
@@ -226,13 +246,13 @@ def add_bool_argument(
     name: str,
     short_name: str = None,
 ) -> None:
-    flag = name.replace('_', '-')
-    pos_flags = ['--' + flag]
+    flag = name.replace("_", "-")
+    pos_flags = ["--" + flag]
     if short_name:
-        pos_flags.append('-' + short_name)
-    neg_flag = '--no-' + flag
-    parser.add_argument(*pos_flags, dest=name, action='store_true')
-    parser.add_argument(neg_flag, dest=name, action='store_false')
+        pos_flags.append("-" + short_name)
+    neg_flag = "--no-" + flag
+    parser.add_argument(*pos_flags, dest=name, action="store_true")
+    parser.add_argument(neg_flag, dest=name, action="store_false")
 
 
 async def action_help(message: str) -> None:
@@ -242,11 +262,11 @@ async def action_help(message: str) -> None:
 async def action_auth(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         url = await drive.get_oauth_url()
-        print('Access the following URL to authorize user:\n')
+        print("Access the following URL to authorize user:\n")
         print(url)
-        print('')
-        print('Paste the redireced URL or provided code here:')
-        answer = input('')
+        print("")
+        print("Paste the redireced URL or provided code here:")
+        answer = input("")
         await drive.set_oauth_token(answer)
 
 
@@ -312,10 +332,10 @@ async def action_usage(factory: DriveFactory, args: argparse.Namespace) -> int:
         node_list = await asyncio.gather(*node_list)
     for usage, src in zip(node_list, args.id_or_path):
         if args.comma:
-            label = f'{usage:,}'
+            label = f"{usage:,}"
         else:
-            label = f'{usage}'
-        print(f'{label} - {src}')
+            label = f"{usage}"
+        print(f"{label} - {src}")
     return 0
 
 
@@ -326,8 +346,7 @@ async def action_download(
 ) -> int:
     with create_executor() as pool:
         async with factory(pool=pool) as drive:
-            node_list = (get_node_by_id_or_path(drive, _)
-                            for _ in args.id_or_path)
+            node_list = (get_node_by_id_or_path(drive, _) for _ in args.id_or_path)
             node_list = await asyncio.gather(*node_list)
             node_list = [_ for _ in node_list if not _.trashed]
 
@@ -337,7 +356,7 @@ async def action_download(
 
     if not queue_.failed:
         return 0
-    print('download failed:')
+    print("download failed:")
     print_as_yaml(queue_.failed)
     return 1
 
@@ -354,7 +373,7 @@ async def action_upload(factory: DriveFactory, args: argparse.Namespace) -> int:
 
     if not queue_.failed:
         return 0
-    print('upload failed:')
+    print("upload failed:")
     print_as_yaml(queue_.failed)
     return 1
 
@@ -368,7 +387,7 @@ async def action_remove(factory: DriveFactory, args: argparse.Namespace) -> int:
     rv = list(rv)
     if not rv:
         return 0
-    print('trash failed:')
+    print("trash failed:")
     print_as_yaml(rv)
     return 1
 
@@ -376,15 +395,13 @@ async def action_remove(factory: DriveFactory, args: argparse.Namespace) -> int:
 @require_authorized
 async def action_rename(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
+
         async def rename(id_or_path: str, dst: str) -> pathlib.PurePath:
             node = await get_node_by_id_or_path(drive, id_or_path)
             path = await drive.get_path(node)
             return await drive.rename_node_by_path(path, dst)
 
-        node_list = (
-            rename(_, args.destination_path)
-            for _ in args.source_id_or_path
-        )
+        node_list = (rename(_, args.destination_path) for _ in args.source_id_or_path)
         await asyncio.gather(*node_list)
     return 0
 
@@ -403,11 +420,14 @@ async def action_mkdir(factory: DriveFactory, args: argparse.Namespace) -> int:
 async def action_trash(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         node_list = await drive.get_trashed_nodes(args.flatten)
-        rv = [{
-            'id': _.id_,
-            'name': _.name,
-            'modified': str(_.modified),
-        } for _ in node_list]
+        rv = [
+            {
+                "id": _.id_,
+                "name": _.name,
+                "modified": str(_.modified),
+            }
+            for _ in node_list
+        ]
         print_as_yaml(rv)
     return 0
 
@@ -420,7 +440,7 @@ async def action_shell(factory: DriveFactory, args: argparse.Namespace) -> int:
             node = await get_node_by_id_or_path(drive, args.id_or_path)
 
     if not node or not node.is_folder:
-        print(f'{args.id_or_path} is not a folder')
+        print(f"{args.id_or_path} is not a folder")
         return 1
 
     interact(factory, node)
@@ -443,18 +463,18 @@ async def action_verify(factory: DriveFactory, args: argparse.Namespace) -> int:
 async def action_doctor(factory: DriveFactory, args: argparse.Namespace) -> int:
     async with factory() as drive:
         for node in await drive.find_multiple_parents_nodes():
-            print(f'{node.name} has multiple parents, please select one parent:')
+            print(f"{node.name} has multiple parents, please select one parent:")
             parent_list = (drive.get_node_by_id(_) for _ in node.parent_list)
             parent_list = await asyncio.gather(*parent_list)
             for index, parent_node in enumerate(parent_list):
-                print(f'{index}: {parent_node.name}')
+                print(f"{index}: {parent_node.name}")
             try:
                 choice = input()
                 choice = int(choice)
                 parent = parent_list[choice]
                 await drive.set_node_parent_by_id(node, parent.id_)
             except Exception as e:
-                print('unknown error, skipped', e)
+                print("unknown error, skipped", e)
                 continue
 
 
@@ -471,5 +491,5 @@ async def action_quota(factory: DriveFactory, args: argparse.Namespace) -> int:
             size = await drive.get_uploaded_size(begin, end)
             total += size
             print(humanize(size))
-        print(f'Total: {humanize(total)}')
+        print(f"Total: {humanize(total)}")
     return 0

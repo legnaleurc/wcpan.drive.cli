@@ -19,7 +19,6 @@ import yaml
 
 
 class UploadVerifier(object):
-
     def __init__(self, drive: Drive, pool: concurrent.futures.Executor) -> None:
         self._drive = drive
         self._pool = pool
@@ -30,7 +29,8 @@ class UploadVerifier(object):
         else:
             await self._run_file(local_path, remote_node)
 
-    async def _run_folder(self,
+    async def _run_folder(
+        self,
         local_path: pathlib.Path,
         remote_node: Node,
     ) -> None:
@@ -44,17 +44,19 @@ class UploadVerifier(object):
         if not child_node:
             return
         if not child_node.is_folder:
-            ERROR('wcpan.drive.cli') << f'[NOT_FOLDER] {local_path}'
+            ERROR("wcpan.drive.cli") << f"[NOT_FOLDER] {local_path}"
             return
 
-        INFO('wcpan.drive.cli') << f'[OK] {local_path}'
+        INFO("wcpan.drive.cli") << f"[OK] {local_path}"
 
-        children = [self.run(child_path, child_node)
-                    for child_path in local_path.iterdir()]
+        children = [
+            self.run(child_path, child_node) for child_path in local_path.iterdir()
+        ]
         if children:
             await asyncio.wait(children)
 
-    async def _run_file(self,
+    async def _run_file(
+        self,
         local_path: pathlib.Path,
         remote_node: Node,
     ) -> None:
@@ -70,17 +72,18 @@ class UploadVerifier(object):
         if not child_node:
             return
         if not child_node.is_file:
-            ERROR('wcpan.drive.cli') << f'[NOT_FILE] {local_path}'
+            ERROR("wcpan.drive.cli") << f"[NOT_FILE] {local_path}"
             return
 
         local_hash = await self._get_hash(local_path)
         if local_hash != child_node.hash_:
-            ERROR('wcpan.drive.cli') << f'[WRONG_HASH] {local_path}'
+            ERROR("wcpan.drive.cli") << f"[WRONG_HASH] {local_path}"
             return
 
-        INFO('wcpan.drive.cli') << f'[OK] {local_path}'
+        INFO("wcpan.drive.cli") << f"[OK] {local_path}"
 
-    async def _get_child_node(self,
+    async def _get_child_node(
+        self,
         local_path: pathlib.Path,
         name: str,
         remote_node: Node,
@@ -90,10 +93,10 @@ class UploadVerifier(object):
             remote_node,
         )
         if not child_node:
-            ERROR('wcpan.drive.cli') << f'[MISSING] {local_path}'
+            ERROR("wcpan.drive.cli") << f"[MISSING] {local_path}"
             return None
         if child_node.trashed:
-            ERROR('wcpan.drive.cli') << f'[TRASHED] {local_path}'
+            ERROR("wcpan.drive.cli") << f"[TRASHED] {local_path}"
             return None
         return child_node
 
@@ -109,7 +112,7 @@ class UploadVerifier(object):
 
 
 async def get_node_by_id_or_path(drive: Drive, id_or_path: str) -> Node:
-    if id_or_path[0] == '/':
+    if id_or_path[0] == "/":
         node = await drive.get_node_by_path(id_or_path)
     else:
         node = await drive.get_node_by_id(id_or_path)
@@ -118,7 +121,7 @@ async def get_node_by_id_or_path(drive: Drive, id_or_path: str) -> Node:
 
 async def traverse_node(drive: Drive, node: Node, level: int) -> None:
     if node.is_root:
-        print_node('/', level)
+        print_node("/", level)
     elif level == 0:
         top_path = await drive.get_path(node)
         print_node(top_path, level)
@@ -132,16 +135,16 @@ async def traverse_node(drive: Drive, node: Node, level: int) -> None:
 
 
 async def trash_node(drive: Drive, id_or_path: str) -> str | None:
-    '''
+    """
     :returns: None if succeed, id_or_path if failed
-    '''
+    """
     node = await get_node_by_id_or_path(drive, id_or_path)
     if not node:
         return id_or_path
     try:
         await drive.trash_node(node)
     except Exception as e:
-        EXCEPTION('wcpan.drive.cli', e) << 'trash failed'
+        EXCEPTION("wcpan.drive.cli", e) << "trash failed"
         return id_or_path
     return None
 
@@ -152,7 +155,7 @@ async def wait_for_value(k, v) -> tuple[str, Any]:
 
 def get_hash(local_path: pathlib.Path, hasher: Hasher) -> str:
     CHUNK_SIZE = 64 * 1024
-    with open(local_path, 'rb') as fin:
+    with open(local_path, "rb") as fin:
         while True:
             chunk = fin.read(CHUNK_SIZE)
             if not chunk:
@@ -176,7 +179,7 @@ async def chunks_of(
 
 
 def print_node(name: str, level: int) -> None:
-    level = ' ' * level
+    level = " " * level
     print(level + name)
 
 
@@ -193,7 +196,7 @@ def print_as_yaml(data: Any) -> None:
 def print_id_node_dict(data: Any) -> None:
     pairs = sorted(data.items(), key=lambda _: _[1])
     for id_, path in pairs:
-        print(f'{id_}: {path}')
+        print(f"{id_}: {path}")
 
 
 async def get_media_info(local_path: pathlib.Path) -> MediaInfo:
@@ -201,10 +204,10 @@ async def get_media_info(local_path: pathlib.Path) -> MediaInfo:
     if not type_:
         return None
 
-    if type_.startswith('image/'):
+    if type_.startswith("image/"):
         return get_image_info(local_path)
 
-    if type_.startswith('video/'):
+    if type_.startswith("video/"):
         return await get_video_info(local_path)
 
     return None
@@ -218,13 +221,17 @@ def get_image_info(local_path: pathlib.Path) -> MediaInfo:
 
 async def get_video_info(local_path: pathlib.Path) -> MediaInfo:
     cmd = (
-        'ffprobe',
-        '-v', 'error',
-        '-show_format',
-        '-show_streams',
-        '-select_streams', 'v:0',
-        '-print_format', 'json',
-        '-i', str(local_path),
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_format",
+        "-show_streams",
+        "-select_streams",
+        "v:0",
+        "-print_format",
+        "json",
+        "-i",
+        str(local_path),
     )
     cp = await asyncio.create_subprocess_exec(
         *cmd,
@@ -234,11 +241,11 @@ async def get_video_info(local_path: pathlib.Path) -> MediaInfo:
     )
     out, dummy_err = await cp.communicate()
     data = json.loads(out)
-    format_ = data['format']
-    ms_duration = math.floor(float(format_['duration']) * 1000)
-    video = data['streams'][0]
-    width = video['width']
-    height = video['height']
+    format_ = data["format"]
+    ms_duration = math.floor(float(format_["duration"]) * 1000)
+    video = data["streams"][0]
+    width = video["width"]
+    height = video["height"]
     return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
 
 
@@ -258,12 +265,12 @@ def get_utc_now() -> datetime.datetime:
 
 
 def humanize(n: int) -> str:
-    UNIT_LIST = ['', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+    UNIT_LIST = ["", "KiB", "MiB", "GiB", "TiB", "PiB"]
     e = 0
     while n >= 1024:
         n = n // 1024
         e += 1
-    return f'{n}{UNIT_LIST[e]}'
+    return f"{n}{UNIT_LIST[e]}"
 
 
 def require_authorized(fn):
@@ -272,6 +279,7 @@ def require_authorized(fn):
         try:
             return await fn(*args, **kwargs)
         except UnauthorizedError:
-            print('not authorized')
+            print("not authorized")
             return 1
+
     return action

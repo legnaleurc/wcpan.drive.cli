@@ -18,11 +18,13 @@ from wcpan.worker import AsyncQueue
 from .util import get_hash, get_media_info
 
 
-SrcT = TypeVar('SrcT')
-DstT = TypeVar('DstT')
-class AbstractQueue(Generic[SrcT, DstT]):
+SrcT = TypeVar("SrcT")
+DstT = TypeVar("DstT")
 
-    def __init__(self,
+
+class AbstractQueue(Generic[SrcT, DstT]):
+    def __init__(
+        self,
         drive: Drive,
         pool: concurrent.futures.Executor,
         jobs: int,
@@ -35,7 +37,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
         self._table = {}
         self._total = 0
 
-    async def __aenter__(self) -> 'AbstractQueue':
+    async def __aenter__(self) -> "AbstractQueue":
         return self
 
     async def __aexit__(self, et, ev, tb) -> bool:
@@ -51,7 +53,8 @@ class AbstractQueue(Generic[SrcT, DstT]):
             hasher,
         )
 
-    async def run(self,
+    async def run(
+        self,
         src_list: list[SrcT],
         dst: DstT,
     ) -> None:
@@ -101,7 +104,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
         try:
             rv = await self.do_folder(src, dst)
         except Exception as e:
-            EXCEPTION('wcpan.drive.cli', e)
+            EXCEPTION("wcpan.drive.cli", e)
             display = await self.get_source_display(src)
             self._add_failed(display)
             rv = None
@@ -120,7 +123,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
         try:
             rv = await self.do_file(src, dst)
         except Exception as e:
-            EXCEPTION('wcpan.drive.cli', e)
+            EXCEPTION("wcpan.drive.cli", e)
             display = await self.get_source_display(src)
             self._add_failed(display)
             rv = None
@@ -131,21 +134,21 @@ class AbstractQueue(Generic[SrcT, DstT]):
 
     @contextlib.asynccontextmanager
     async def _log_guard(self, src: SrcT):
-        await self._log('begin', src)
+        await self._log("begin", src)
         try:
             yield
         finally:
-            await self._log('end', src)
+            await self._log("end", src)
 
     async def _log(self, begin_or_end: str, src: SrcT) -> None:
         progress = self._get_progress(src)
         display = await self.get_source_display(src)
-        INFO('wcpan.drive.cli') << f'{progress} {begin_or_end} {display}'
+        INFO("wcpan.drive.cli") << f"{progress} {begin_or_end} {display}"
 
     def _get_progress(self, src: SrcT) -> str:
         key = self.get_source_hash(src)
         id_ = self._table[key]
-        return f'[{id_}/{self._total}]'
+        return f"[{id_}/{self._total}]"
 
     def _update_counter_table(self, src: SrcT) -> None:
         key = self.get_source_hash(src)
@@ -154,8 +157,8 @@ class AbstractQueue(Generic[SrcT, DstT]):
 
 
 class UploadQueue(AbstractQueue):
-
-    def __init__(self,
+    def __init__(
+        self,
         drive: Drive,
         pool: concurrent.futures.Executor,
         jobs: int,
@@ -171,7 +174,8 @@ class UploadQueue(AbstractQueue):
     def source_is_folder(self, local_path: pathlib.Path) -> bool:
         return local_path.is_dir()
 
-    async def do_folder(self,
+    async def do_folder(
+        self,
         local_path: pathlib.Path,
         parent_node: Node,
     ) -> Node:
@@ -183,14 +187,16 @@ class UploadQueue(AbstractQueue):
         )
         return node
 
-    async def get_children(self,
+    async def get_children(
+        self,
         local_path: pathlib.Path,
     ) -> list[pathlib.Path]:
         rv = os.listdir(local_path)
         rv = [local_path / _ for _ in rv]
         return rv
 
-    async def do_file(self,
+    async def do_file(
+        self,
         local_path: pathlib.Path,
         parent_node: Node,
     ) -> Node:
@@ -204,10 +210,10 @@ class UploadQueue(AbstractQueue):
         )
         local_size = local_path.stat().st_size
         if local_size != node.size:
-            raise Exception(f'{local_path} size mismatch')
+            raise Exception(f"{local_path} size mismatch")
         local_hash = await self.get_local_file_hash(local_path)
         if local_hash != node.hash_:
-            raise Exception(f'{local_path} checksum mismatch')
+            raise Exception(f"{local_path} checksum mismatch")
         return node
 
     def get_source_hash(self, local_path: pathlib.Path) -> str:
@@ -218,8 +224,8 @@ class UploadQueue(AbstractQueue):
 
 
 class DownloadQueue(AbstractQueue):
-
-    def __init__(self,
+    def __init__(
+        self,
         drive: Drive,
         pool: concurrent.futures.Executor,
         jobs: int,
@@ -236,7 +242,8 @@ class DownloadQueue(AbstractQueue):
     def source_is_folder(self, node: Node) -> bool:
         return node.is_folder
 
-    async def do_folder(self,
+    async def do_folder(
+        self,
         node: Node,
         local_path: pathlib.Path,
     ) -> pathlib.Path:
@@ -247,14 +254,15 @@ class DownloadQueue(AbstractQueue):
     async def get_children(self, node: Node) -> list[Node]:
         return await self.drive.get_children(node)
 
-    async def do_file(self,
+    async def do_file(
+        self,
         node: Node,
         local_path: pathlib.Path,
     ) -> pathlib.Path:
         local_path = await download_to_local(self.drive, node, local_path)
         local_hash = await self.get_local_file_hash(local_path)
         if local_hash != node.hash_:
-            raise Exception(f'{local_path} checksum mismatch')
+            raise Exception(f"{local_path} checksum mismatch")
         return local_path
 
     def get_source_hash(self, node: Node) -> str:
