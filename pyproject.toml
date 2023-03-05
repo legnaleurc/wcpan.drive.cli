@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wcpan.drive.cli"
-version = "2.1.0"
+version = "2.2.0"
 description = "command line tool for wcpan.drive"
 authors = ["Wei-Cheng Pan <legnaleurc@gmail.com>"]
 license = "MIT"
