@@ -1,7 +1,6 @@
 import asyncio
 from concurrent.futures import Executor
 import contextlib
-import functools
 from logging import getLogger
 import os
 import pathlib
@@ -13,7 +12,7 @@ from wcpan.drive.core.drive import (
     upload_from_local,
 )
 from wcpan.drive.core.types import Node
-from wcpan.worker import AsyncQueue
+from wcpan.worker import create_queue, consume_all
 
 from .util import get_hash, get_media_info
 
@@ -31,7 +30,9 @@ class AbstractQueue(Generic[SrcT, DstT]):
     ) -> None:
         self.drive = drive
         self.failed = []
-        self._queue = AsyncQueue(jobs)
+        self._queue = create_queue()
+        self._consumer_count = jobs
+        self._consumers = None
         self._pool = pool
         self._counter = 0
         self._table = {}
@@ -40,8 +41,8 @@ class AbstractQueue(Generic[SrcT, DstT]):
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, et, ev, tb) -> bool:
-        await self._queue.shutdown()
+    async def __aexit__(self, et, e, tb) -> None:
+        pass
 
     async def get_local_file_hash(self, local_path: pathlib.Path) -> str:
         hasher = await self.drive.get_hasher()
@@ -66,9 +67,8 @@ class AbstractQueue(Generic[SrcT, DstT]):
         total = await asyncio.gather(*total)
         self._total = sum(total)
         for src in src_list:
-            fn = functools.partial(self._run_one_task, src, dst)
-            self._queue.post(fn)
-        await self._queue.join()
+            await self._queue.put(self._run_one_task(src, dst))
+        await consume_all(self._queue, self._consumer_count)
 
     async def count_tasks(self, src: SrcT) -> int:
         raise NotImplementedError()
@@ -114,8 +114,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
 
         children = await self.get_children(src)
         for child in children:
-            fn = functools.partial(self._run_one_task, child, rv)
-            self._queue.post(fn)
+            await self._queue.put(self._run_one_task(child, rv))
 
         return rv
 
