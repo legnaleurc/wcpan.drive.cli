@@ -327,33 +327,18 @@ arrow = ">=1.2.3,<2.0.0"
 PyYAML = ">=6.0,<7.0"
 
 [[package]]
-name = "wcpan-logger"
-version = "1.5.0"
-description = "A RAII style logging module"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-files = [
-    {file = "wcpan.logger-1.5.0-py3-none-any.whl", hash = "sha256:6b6378a077008fe30051eee0d0a2ccd19e62b8f48975f1d1fd7b0574b3497a61"},
-    {file = "wcpan.logger-1.5.0.tar.gz", hash = "sha256:644ec36334ebd860235fee0080a5a92dd06cfb39588b94cc237b46c1b0ec46b7"},
-]
-
-[[package]]
 name = "wcpan-worker"
-version = "5.0.0"
+version = "6.0.0"
 description = "An asynchronous task queue with priority support."
 category = "main"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.11,<4.0"
 files = [
-    {file = "wcpan.worker-5.0.0-py3-none-any.whl", hash = "sha256:24d74f1a2e30b3bbd55bb044435c71c76c4a004116f2e8345c5e1490e36ed4e8"},
-    {file = "wcpan.worker-5.0.0.tar.gz", hash = "sha256:a6fe6f13ac14e2400e5972db21704d6e912ff0cb4a9d0d25e105b0f696445c33"},
+    {file = "wcpan_worker-6.0.0-py3-none-any.whl", hash = "sha256:1e9edd8cb018139961760ee5bce3e38eb44689fbba59e78a5c60f27a567a1cb1"},
+    {file = "wcpan_worker-6.0.0.tar.gz", hash = "sha256:1e434523fd2883943e8b419250017d3b5627c055ef90a994a06d95bdc82b3607"},
 ]
-
-[package.dependencies]
-"wcpan.logger" = ">=1.2,<2.0"
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "605333673299e33cdd4b76cf7a9289199c6220d15d557a3b2ba256c985e1b4a6"
+content-hash = "127ee33a2a40895c011998a3d15732157ecb1a4dca13295cea539c0ae731c377"
