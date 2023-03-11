@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "wcpan.drive.cli"
+name = "wcpan-drive-cli"
 version = "2.2.0"
 description = "command line tool for wcpan.drive"
 authors = ["Wei-Cheng Pan <legnaleurc@gmail.com>"]
@@ -9,17 +9,16 @@ packages = [{include = "wcpan"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Typing :: Typed",
 ]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 Pillow = "^9.0"
 PyYAML = "^6.0"
-"wcpan.drive.core" = "^3.1.0"
-"wcpan.logger" = "^1.2"
-"wcpan.worker" = "^5.0"
+wcpan-drive-core = "^3.1.0"
+wcpan-worker = "^5.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
