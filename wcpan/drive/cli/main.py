@@ -58,7 +58,7 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         "--version",
         "-v",
         action="version",
-        version=f"wcpan.drive.cli {VERSION}",
+        version=f"{VERSION}",
     )
 
     parser.add_argument(
