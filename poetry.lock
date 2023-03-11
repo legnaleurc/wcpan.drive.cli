@@ -56,7 +56,6 @@ mypy-extensions = ">=0.4.3"
 packaging = ">=22.0"
 pathspec = ">=0.9.0"
 platformdirs = ">=2"
-tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
 colorama = ["colorama (>=0.4.3)"]
@@ -312,33 +311,20 @@ files = [
 ]
 
 [[package]]
-name = "tomli"
-version = "2.0.1"
-description = "A lil' TOML parser"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
-    {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
-]
-
-[[package]]
 name = "wcpan-drive-core"
-version = "3.2.0"
+version = "3.2.1"
 description = "asynchronous generic cloud drive library"
 category = "main"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = ">=3.11,<4.0"
 files = [
-    {file = "wcpan_drive_core-3.2.0-py3-none-any.whl", hash = "sha256:8f8d24c2fa63850498b400c9f014c282ab5cee0f60ab9541910a2390eee4cd9a"},
-    {file = "wcpan_drive_core-3.2.0.tar.gz", hash = "sha256:0d11756e1f702ba5f35f84095bf0cf0dc3b65d5c76171495f6a38bcc376cf2f9"},
+    {file = "wcpan_drive_core-3.2.1-py3-none-any.whl", hash = "sha256:fdde18927e6b495ed7a95af09ea72ca810da518648839c0676ba0ce9d3bcd445"},
+    {file = "wcpan_drive_core-3.2.1.tar.gz", hash = "sha256:4982232342be56e20fa3af3e0a36997c457889154adb22e560b2941da7fb88f2"},
 ]
 
 [package.dependencies]
 arrow = ">=1.2.3,<2.0.0"
 PyYAML = ">=6.0,<7.0"
-"wcpan.logger" = ">=1.2,<2.0"
 
 [[package]]
 name = "wcpan-logger"
@@ -369,5 +355,5 @@ files = [
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "07ca0a3445f06f54b375ace1576518d025137e8d919a099c5abfb79ff2d26044"
+python-versions = "^3.11"
+content-hash = "605333673299e33cdd4b76cf7a9289199c6220d15d557a3b2ba256c985e1b4a6"
