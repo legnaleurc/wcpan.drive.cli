@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 import contextlib
 import functools
+from logging import getLogger
 import os
 import pathlib
 from typing import Generic, TypeVar
@@ -12,7 +13,6 @@ from wcpan.drive.core.drive import (
     upload_from_local,
 )
 from wcpan.drive.core.types import Node
-from wcpan.logger import EXCEPTION, INFO
 from wcpan.worker import AsyncQueue
 
 from .util import get_hash, get_media_info
@@ -103,8 +103,8 @@ class AbstractQueue(Generic[SrcT, DstT]):
     async def _run_for_folder(self, src: SrcT, dst: DstT) -> DstT | None:
         try:
             rv = await self.do_folder(src, dst)
-        except Exception as e:
-            EXCEPTION("wcpan.drive.cli", e)
+        except Exception:
+            getLogger(__name__).exception("failed on folder action")
             display = await self.get_source_display(src)
             self._add_failed(display)
             rv = None
@@ -122,8 +122,8 @@ class AbstractQueue(Generic[SrcT, DstT]):
     async def _run_for_file(self, src: SrcT, dst: DstT) -> DstT | None:
         try:
             rv = await self.do_file(src, dst)
-        except Exception as e:
-            EXCEPTION("wcpan.drive.cli", e)
+        except Exception:
+            getLogger(__name__).exception("failed on file action")
             display = await self.get_source_display(src)
             self._add_failed(display)
             rv = None
@@ -143,7 +143,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
     async def _log(self, begin_or_end: str, src: SrcT) -> None:
         progress = self._get_progress(src)
         display = await self.get_source_display(src)
-        INFO("wcpan.drive.cli") << f"{progress} {begin_or_end} {display}"
+        getLogger(__name__).info(f"{progress} {begin_or_end} {display}")
 
     def _get_progress(self, src: SrcT) -> str:
         key = self.get_source_hash(src)

@@ -5,8 +5,6 @@ import io
 import pathlib
 import sys
 
-from wcpan.logger import setup as setup_logger
-
 from wcpan.drive.core.drive import DriveFactory
 from wcpan.drive.core.util import (
     create_executor,
@@ -36,8 +34,6 @@ from .interaction import interact
 async def main(args: list[str] = None) -> int:
     if args is None:
         args = sys.argv
-
-    setup_logger(("wcpan.drive",))
 
     args = parse_args(args[1:])
     if not args.action:

@@ -3,6 +3,7 @@ import concurrent.futures
 import datetime
 import functools
 import json
+from logging import getLogger
 import math
 import mimetypes
 import pathlib
@@ -14,7 +15,6 @@ from wcpan.drive.core.abc import Hasher
 from wcpan.drive.core.drive import Drive
 from wcpan.drive.core.types import Node, ChangeDict, MediaInfo
 from wcpan.drive.core.exceptions import UnauthorizedError
-from wcpan.logger import ERROR, INFO, EXCEPTION
 import yaml
 
 
@@ -44,10 +44,10 @@ class UploadVerifier(object):
         if not child_node:
             return
         if not child_node.is_folder:
-            ERROR("wcpan.drive.cli") << f"[NOT_FOLDER] {local_path}"
+            getLogger(__name__).error(f"[NOT_FOLDER] {local_path}")
             return
 
-        INFO("wcpan.drive.cli") << f"[OK] {local_path}"
+        getLogger(__name__).info(f"[OK] {local_path}")
 
         children = [
             self.run(child_path, child_node) for child_path in local_path.iterdir()
@@ -72,15 +72,15 @@ class UploadVerifier(object):
         if not child_node:
             return
         if not child_node.is_file:
-            ERROR("wcpan.drive.cli") << f"[NOT_FILE] {local_path}"
+            getLogger(__name__).error(f"[NOT_FILE] {local_path}")
             return
 
         local_hash = await self._get_hash(local_path)
         if local_hash != child_node.hash_:
-            ERROR("wcpan.drive.cli") << f"[WRONG_HASH] {local_path}"
+            getLogger(__name__).error(f"[WRONG_HASH] {local_path}")
             return
 
-        INFO("wcpan.drive.cli") << f"[OK] {local_path}"
+        getLogger(__name__).info(f"[OK] {local_path}")
 
     async def _get_child_node(
         self,
@@ -93,10 +93,10 @@ class UploadVerifier(object):
             remote_node,
         )
         if not child_node:
-            ERROR("wcpan.drive.cli") << f"[MISSING] {local_path}"
+            getLogger(__name__).error(f"[MISSING] {local_path}")
             return None
         if child_node.trashed:
-            ERROR("wcpan.drive.cli") << f"[TRASHED] {local_path}"
+            getLogger(__name__).error(f"[TRASHED] {local_path}")
             return None
         return child_node
 
@@ -144,7 +144,7 @@ async def trash_node(drive: Drive, id_or_path: str) -> str | None:
     try:
         await drive.trash_node(node)
     except Exception as e:
-        EXCEPTION("wcpan.drive.cli", e) << "trash failed"
+        getLogger(__name__).exception("trash failed")
         return id_or_path
     return None
 
