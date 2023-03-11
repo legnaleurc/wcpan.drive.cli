@@ -19,6 +19,7 @@ Pillow = "^9.0"
 PyYAML = "^6.0"
 wcpan-drive-core = "^3.1.0"
 wcpan-worker = "^6.0.0"
+wcpan-logging = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"

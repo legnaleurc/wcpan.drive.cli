@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import functools
 import io
+from logging.config import dictConfig
 import pathlib
 import sys
 
@@ -11,6 +12,7 @@ from wcpan.drive.core.util import (
     get_default_config_path,
     get_default_data_path,
 )
+from wcpan.logging import ConfigBuilder
 
 from . import __version__ as VERSION
 from .queue_ import DownloadQueue, UploadQueue
@@ -38,6 +40,8 @@ def main(args: list[str] = None) -> int:
 
 
 async def amain(args: list[str]) -> int:
+    dictConfig(ConfigBuilder(level="D").add("wcpan.drive.cli").to_dict())
+
     args = parse_args(args[1:])
     if not args.action:
         await args.fallback_action()

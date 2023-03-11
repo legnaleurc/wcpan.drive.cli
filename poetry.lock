@@ -327,6 +327,18 @@ arrow = ">=1.2.3,<2.0.0"
 PyYAML = ">=6.0,<7.0"
 
 [[package]]
+name = "wcpan-logging"
+version = "2.0.1"
+description = "configuration generator for builtin logging module"
+category = "main"
+optional = false
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "wcpan_logging-2.0.1-py3-none-any.whl", hash = "sha256:7d1c5fb5dce7d6d0dd6a8645bf69b4a30281bc296a83a9de06e89f5a798d2a19"},
+    {file = "wcpan_logging-2.0.1.tar.gz", hash = "sha256:2e2aecd5a9486d4a908c90ce8ab1c103af9d227a9418cfa5c40d5ab0e9405a60"},
+]
+
+[[package]]
 name = "wcpan-worker"
 version = "6.0.0"
 description = "An asynchronous task queue with priority support."
@@ -341,4 +353,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "127ee33a2a40895c011998a3d15732157ecb1a4dca13295cea539c0ae731c377"
+content-hash = "942e688606401939359d6813ec211b3faa39bdc2d2eac1d1f1f53f20717db567"
