@@ -1,5 +1,5 @@
 import asyncio
-import concurrent.futures
+from concurrent.futures import Executor
 import datetime
 import functools
 import json
@@ -19,7 +19,7 @@ import yaml
 
 
 class UploadVerifier(object):
-    def __init__(self, drive: Drive, pool: concurrent.futures.Executor) -> None:
+    def __init__(self, drive: Drive, pool: Executor) -> None:
         self._drive = drive
         self._pool = pool
 

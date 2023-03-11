@@ -1,11 +1,11 @@
 import asyncio
-import concurrent.futures
+from concurrent.futures import Executor
 import contextlib
 import functools
 from logging import getLogger
 import os
 import pathlib
-from typing import Generic, TypeVar
+from typing import Generic, Self, TypeVar
 
 from wcpan.drive.core.drive import (
     Drive,
@@ -26,7 +26,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
     def __init__(
         self,
         drive: Drive,
-        pool: concurrent.futures.Executor,
+        pool: Executor,
         jobs: int,
     ) -> None:
         self.drive = drive
@@ -37,7 +37,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
         self._table = {}
         self._total = 0
 
-    async def __aenter__(self) -> "AbstractQueue":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, et, ev, tb) -> bool:
@@ -160,7 +160,7 @@ class UploadQueue(AbstractQueue):
     def __init__(
         self,
         drive: Drive,
-        pool: concurrent.futures.Executor,
+        pool: Executor,
         jobs: int,
     ) -> None:
         super(UploadQueue, self).__init__(drive, pool, jobs)
@@ -227,7 +227,7 @@ class DownloadQueue(AbstractQueue):
     def __init__(
         self,
         drive: Drive,
-        pool: concurrent.futures.Executor,
+        pool: Executor,
         jobs: int,
     ) -> None:
         super(DownloadQueue, self).__init__(drive, pool, jobs)
