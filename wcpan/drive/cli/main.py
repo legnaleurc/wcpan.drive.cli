@@ -31,10 +31,13 @@ from .util import (
 from .interaction import interact
 
 
-async def main(args: list[str] = None) -> int:
+def main(args: list[str] = None) -> int:
     if args is None:
         args = sys.argv
+    return asyncio.run(amain(args))
 
+
+async def amain(args: list[str]) -> int:
     args = parse_args(args[1:])
     if not args.action:
         await args.fallback_action()
