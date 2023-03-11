@@ -1,5 +1,6 @@
 import contextlib
 import hashlib
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import IsolatedAsyncioTestCase
@@ -11,6 +12,12 @@ from wcpan.drive.cli.queue_ import DownloadQueue, UploadQueue
 
 
 class TestQueue(IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self) -> None:
+        logging.disable(logging.NOTSET)
+
     @patch("wcpan.drive.cli.queue_.upload_from_local")
     async def testUpload(self, fake_upload: MagicMock):
         async with upload_context(1) as (work_folder, drive, queue):
