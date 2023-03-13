@@ -43,7 +43,7 @@ def main(args: list[str] = None) -> int:
 
 
 async def amain(args: list[str]) -> int:
-    dictConfig(ConfigBuilder(level="D").add("wcpan.drive.cli").to_dict())
+    dictConfig(ConfigBuilder().add("wcpan", level="D").to_dict())
 
     args = parse_args(args[1:])
     if not args.action:
