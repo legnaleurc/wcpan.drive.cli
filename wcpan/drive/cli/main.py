@@ -36,7 +36,10 @@ from .interaction import interact
 def main(args: list[str] = None) -> int:
     if args is None:
         args = sys.argv
-    return asyncio.run(amain(args))
+    try:
+        return asyncio.run(amain(args))
+    except KeyboardInterrupt:
+        return 1
 
 
 async def amain(args: list[str]) -> int:
