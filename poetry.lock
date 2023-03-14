@@ -339,18 +339,18 @@ files = [
 ]
 
 [[package]]
-name = "wcpan-worker"
-version = "6.1.1"
-description = "An asynchronous task queue with priority support."
+name = "wcpan-queue"
+version = "7.0.0"
+description = "An utility for asyncio.Queue."
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "wcpan_worker-6.1.1-py3-none-any.whl", hash = "sha256:e741292595f258cf8e5bf84f80efb518633145202bd8c4c6c8a80f2b9255ab0c"},
-    {file = "wcpan_worker-6.1.1.tar.gz", hash = "sha256:5906088295b68820a57e55940a19df4bd94d39571a8a49ecde44c6ab133e5883"},
+    {file = "wcpan_queue-7.0.0-py3-none-any.whl", hash = "sha256:7756fc392d6068e12d2dce83980703e720f3de259fb32abbb5d2c2df23cc61db"},
+    {file = "wcpan_queue-7.0.0.tar.gz", hash = "sha256:eb93b871e51183c48232f9a9611999ef4d25f1a4b184583564b1665f3a648dc6"},
 ]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "06dd2b51408e89c65cc8a75de728bb61a432ac15b21c9e6de4e321423649b256"
+content-hash = "ff7dc4b9ece9f64ad3f1ff6bb7fd896521938393086a1068556ba375cf916c7e"

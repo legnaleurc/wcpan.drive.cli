@@ -12,7 +12,7 @@ from wcpan.drive.core.drive import (
     upload_from_local,
 )
 from wcpan.drive.core.types import Node
-from wcpan.worker import create_queue, consume_all, purge_queue
+from wcpan.queue import AioQueue
 
 from .util import get_hash, get_media_info
 
@@ -30,7 +30,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
     ) -> None:
         self.drive = drive
         self.failed = []
-        self._queue = create_queue()
+        self._queue = AioQueue.fifo()
         self._consumer_count = jobs
         self._consumers = None
         self._pool = pool
@@ -67,11 +67,11 @@ class AbstractQueue(Generic[SrcT, DstT]):
         total = await asyncio.gather(*total)
         self._total = sum(total)
         for src in src_list:
-            await self._queue.put(self._run_one_task(src, dst))
+            await self._queue.push(self._run_one_task(src, dst))
         try:
-            await consume_all(self._queue, self._consumer_count)
+            await self._queue.consume(self._consumer_count)
         finally:
-            purge_queue(self._queue)
+            self._queue.purge()
 
     async def count_tasks(self, src: SrcT) -> int:
         raise NotImplementedError()
@@ -117,7 +117,7 @@ class AbstractQueue(Generic[SrcT, DstT]):
 
         children = await self.get_children(src)
         for child in children:
-            await self._queue.put(self._run_one_task(child, rv))
+            await self._queue.push(self._run_one_task(child, rv))
 
         return rv
 
