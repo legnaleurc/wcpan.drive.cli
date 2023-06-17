@@ -4,7 +4,7 @@ import contextlib
 from logging import getLogger
 import os
 import pathlib
-from typing import Generic, Self, TypeVar
+from typing import Generic, TypeVar
 
 from wcpan.drive.core.drive import (
     Drive,
@@ -37,12 +37,6 @@ class AbstractQueue(Generic[SrcT, DstT]):
         self._counter = 0
         self._table = {}
         self._total = 0
-
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, et, e, tb) -> None:
-        pass
 
     async def get_local_file_hash(self, local_path: pathlib.Path) -> str:
         hasher = await self.drive.get_hasher()

@@ -356,9 +356,9 @@ async def action_download(
             node_list = await asyncio.gather(*node_list)
             node_list = [_ for _ in node_list if not _.trashed]
 
-            async with DownloadQueue(drive, pool, args.jobs) as queue_:
-                dst = pathlib.Path(args.destination)
-                await queue_.run(node_list, dst)
+            queue_ = DownloadQueue(drive, pool, args.jobs)
+            dst = pathlib.Path(args.destination)
+            await queue_.run(node_list, dst)
 
     if not queue_.failed:
         return 0
@@ -373,9 +373,9 @@ async def action_upload(factory: DriveFactory, args: argparse.Namespace) -> int:
         async with factory(pool=pool) as drive:
             node = await get_node_by_id_or_path(drive, args.id_or_path)
 
-            async with UploadQueue(drive, pool, args.jobs) as queue_:
-                src_list = [pathlib.Path(_) for _ in args.source]
-                await queue_.run(src_list, node)
+            queue_ = UploadQueue(drive, pool, args.jobs)
+            src_list = [pathlib.Path(_) for _ in args.source]
+            await queue_.run(src_list, node)
 
     if not queue_.failed:
         return 0

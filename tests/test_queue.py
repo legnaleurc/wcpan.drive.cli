@@ -119,8 +119,8 @@ async def upload_context(jobs: int):
                 async for changes in drive.sync():
                     pass
 
-                async with UploadQueue(drive, pool, jobs) as queue:
-                    yield work_folder, drive, queue
+                queue = UploadQueue(drive, pool, jobs)
+                yield work_folder, drive, queue
 
 
 @contextlib.asynccontextmanager
@@ -157,8 +157,8 @@ async def download_context(jobs: int):
                 async for changes in drive.sync():
                     pass
 
-                async with DownloadQueue(drive, pool, jobs) as queue:
-                    yield work_folder, drive, queue
+                queue = DownloadQueue(drive, pool, jobs)
+                yield work_folder, drive, queue
 
 
 async def bypass_upload(
