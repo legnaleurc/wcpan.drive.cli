@@ -465,7 +465,7 @@ async def action_verify(factory: DriveFactory, args: argparse.Namespace) -> int:
             node = await get_node_by_id_or_path(drive, args.id_or_path)
 
             queue_ = VerifyQueue(drive, pool, 1)
-            src_list = (pathlib.Path(local_path) for local_path in args.source)
+            src_list = [pathlib.Path(local_path) for local_path in args.source]
             await queue_.run(src_list, node)
 
     return 0
