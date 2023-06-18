@@ -27,7 +27,6 @@ from .util import (
     require_authorized,
     trash_node,
     traverse_node,
-    UploadVerifier,
     wait_for_value,
 )
 from .interaction import interact
