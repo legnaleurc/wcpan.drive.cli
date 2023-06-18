@@ -15,7 +15,7 @@ from wcpan.drive.core.util import (
 from wcpan.logging import ConfigBuilder
 
 from . import __version__ as VERSION
-from .queue_ import DownloadQueue, UploadQueue
+from .queue_ import DownloadQueue, UploadQueue, VerifyQueue
 from .util import (
     chunks_of,
     get_node_by_id_or_path,
@@ -228,6 +228,13 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         help="verify uploaded files/folders",
     )
     v_parser.set_defaults(action=action_verify)
+    v_parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=1,
+        help=("maximum simultaneously verify jobs" " (default: %(default)s)"),
+    )
     v_parser.add_argument("source", type=str, nargs="+")
     v_parser.add_argument("id_or_path", type=str)
 
@@ -458,10 +465,9 @@ async def action_verify(factory: DriveFactory, args: argparse.Namespace) -> int:
         async with factory(pool=pool) as drive:
             node = await get_node_by_id_or_path(drive, args.id_or_path)
 
-            v = UploadVerifier(drive, pool)
-            tasks = (pathlib.Path(local_path) for local_path in args.source)
-            tasks = [v.run(local_path, node) for local_path in tasks]
-            await asyncio.wait(tasks)
+            queue_ = VerifyQueue(drive, pool, 1)
+            src_list = (pathlib.Path(local_path) for local_path in args.source)
+            await queue_.run(src_list, node)
 
     return 0
 

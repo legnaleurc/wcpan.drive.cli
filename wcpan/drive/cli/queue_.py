@@ -266,3 +266,101 @@ class DownloadQueue(AbstractQueue):
 
     async def get_source_display(self, node: Node) -> str:
         return await self.drive.get_path(node)
+
+
+class VerifyQueue(AbstractQueue):
+    def __init__(
+        self,
+        drive: Drive,
+        pool: Executor,
+        jobs: int,
+    ) -> None:
+        super(VerifyQueue, self).__init__(drive, pool, jobs)
+
+    async def count_tasks(self, local_path: pathlib.Path) -> int:
+        total = 1
+        for dummy_root, folders, files in os.walk(local_path):
+            total = total + len(folders) + len(files)
+        return total
+
+    def source_is_folder(self, local_path: pathlib.Path) -> bool:
+        return local_path.is_dir()
+
+    async def do_folder(
+        self,
+        local_path: pathlib.Path,
+        parent_node: Node,
+    ) -> Node | None:
+        dir_name = local_path.name
+
+        node = await self._get_child_node(
+            local_path,
+            dir_name,
+            parent_node,
+        )
+        if not node:
+            return None
+        if not node.is_folder:
+            getLogger(__name__).error(f"[NOT_FOLDER] {local_path}")
+            return None
+
+        getLogger(__name__).info(f"[OK] {local_path}")
+        return node
+
+    async def get_children(
+        self,
+        local_path: pathlib.Path,
+    ) -> list[pathlib.Path]:
+        rv = os.listdir(local_path)
+        rv = [local_path / _ for _ in rv]
+        return rv
+
+    async def do_file(
+        self,
+        local_path: pathlib.Path,
+        parent_node: Node,
+    ) -> Node | None:
+        file_name = local_path.name
+
+        node = await self._get_child_node(
+            local_path,
+            file_name,
+            parent_node,
+        )
+        if not node:
+            return None
+        if not node.is_file:
+            getLogger(__name__).error(f"[NOT_FILE] {local_path}")
+            return None
+
+        local_hash = await self.get_local_file_hash(local_path)
+        if local_hash != node.hash_:
+            getLogger(__name__).error(f"[WRONG_HASH] {local_path}")
+            return None
+
+        getLogger(__name__).info(f"[OK] {local_path}")
+        return node
+
+    def get_source_hash(self, local_path: pathlib.Path) -> str:
+        return str(local_path)
+
+    async def get_source_display(self, local_path: pathlib.Path) -> str:
+        return str(local_path)
+
+    async def _get_child_node(
+        self,
+        local_path: pathlib.Path,
+        name: str,
+        parent_node: Node,
+    ) -> Node | None:
+        child_node = await self.drive.get_node_by_name_from_parent(
+            name,
+            parent_node,
+        )
+        if not child_node:
+            getLogger(__name__).error(f"[MISSING] {local_path}")
+            return None
+        if child_node.trashed:
+            getLogger(__name__).error(f"[TRASHED] {local_path}")
+            return None
+        return child_node
