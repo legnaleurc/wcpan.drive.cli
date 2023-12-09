@@ -3,14 +3,13 @@ import asyncio
 import contextlib
 import enum
 import pathlib
-import queue
 import shlex
-import threading
+from threading import Thread, Condition
+from queue import Queue
 
-from wcpan.drive.core.types import Node
-from wcpan.drive.core.drive import DriveFactory, Drive
+from wcpan.drive.core.types import Node, Drive
 
-from .util import print_as_yaml
+from ._lib import print_as_yaml
 
 
 class TokenType(enum.Enum):
@@ -96,7 +95,7 @@ class ShellContext(object):
         for c in cmd:
             print(c)
 
-    def _list(self, src: str = None) -> None:
+    def _list(self, src: str | None = None) -> None:
         if not src:
             node = self._cwd
         else:
@@ -110,7 +109,7 @@ class ShellContext(object):
         for child in children:
             print(child.name)
 
-    def _chdir(self, src: str = None) -> None:
+    def _chdir(self, src: str | None = None) -> None:
         if not src:
             self._cwd = self._home
             return
@@ -120,7 +119,7 @@ class ShellContext(object):
         if not node:
             print(f"unknown path {src}")
             return
-        if not node.is_folder:
+        if not node.is_directory:
             print(f"{src} is not a folder")
             return
 
@@ -146,13 +145,15 @@ class ShellContext(object):
             print(f"{id_} - {path}")
 
     def _info(self, src: str) -> None:
+        from dataclasses import asdict
+
         node = self._drive.get_node_by_id(src)
         if not node:
             print("null")
         else:
-            print_as_yaml(node.to_dict())
+            print_as_yaml(asdict(node))
 
-    def _hash(self, *args) -> None:
+    def _hash(self, *args: str) -> None:
         rv = self._drive.get_hash_list(self._cwd, args)
         for [path_or_id, hash_] in rv:
             print(f"{hash_} - {path_or_id}")
@@ -171,16 +172,16 @@ class ShellContext(object):
         if not node:
             print(f"{src} not found")
             return
-        print(node.id_)
+        print(node.id)
 
 
 class ChildrenCache(object):
     def __init__(self, drive: "DriveProxy") -> None:
         self._drive = drive
-        self._cache = {}
+        self._cache: dict[str, list[str]] = {}
 
     def get(self, cwd: Node, src: str) -> list[str]:
-        key = f"{cwd.id_}:{src}"
+        key = f"{cwd.id}:{src}"
         if key in self._cache:
             return self._cache[key]
 
@@ -189,6 +190,7 @@ class ChildrenCache(object):
         if not node:
             parent_path = path.parent
             node = self._drive.get_node_by_path(parent_path)
+            assert node
 
         children = self._drive.get_children(node)
         self._cache[key] = [child.name for child in children]
@@ -199,10 +201,10 @@ class ChildrenCache(object):
 
 
 class DriveProxy(object):
-    def __init__(self, factory: DriveFactory) -> None:
-        self._factory = factory
-        self._thread = threading.Thread(target=self._main)
-        self._queue = queue.Queue()
+    def __init__(self, drive: Drive) -> None:
+        self._drive = drive
+        self._thread = Thread(target=self._main)
+        self._queue = Queue[OffMainThreadTask | None]()
         self._actions = {
             "sync": self._sync,
             "get_node_by_path": self._get_node_by_path,
@@ -218,7 +220,7 @@ class DriveProxy(object):
         self._thread.start()
         return self
 
-    def __exit__(self, et, ev, tb) -> bool:
+    def __exit__(self, et: Any, ev: Any, tb: Any) -> None:
         self._queue.put(None)
         self._queue.join()
         self._thread.join()
@@ -231,26 +233,25 @@ class DriveProxy(object):
     async def _amain(self) -> None:
         assert_off_main_thread()
 
-        async with self._factory() as drive:
-            while True:
-                task = self._queue.get()
-                try:
-                    if not task:
-                        break
+        while True:
+            task = self._queue.get()
+            try:
+                if not task:
+                    break
 
-                    if task.action not in self._actions:
-                        print(f"unknown action {task.action}")
-                        return
+                if task.action not in self._actions:
+                    print(f"unknown action {task.action}")
+                    return
 
-                    action = self._actions[task.action]
-                    await action(drive, task)
-                except Exception as e:
-                    print(e)
-                finally:
-                    if task:
-                        with task as cv:
-                            cv.notify()
-                    self._queue.task_done()
+                action = self._actions[task.action]
+                await action(self._drive, task)
+            except Exception as e:
+                print(e)
+            finally:
+                if task:
+                    with task as cv:
+                        cv.notify()
+                self._queue.task_done()
 
     def sync(self) -> None:
         task = OffMainThreadTask(
@@ -300,7 +301,7 @@ class DriveProxy(object):
     async def _get_path(self, drive: Drive, task: "OffMainThreadTask") -> None:
         assert_off_main_thread()
 
-        rv = await drive.get_path(*task.args, **task.kwargs)
+        rv = await drive.resolve_path(*task.args, **task.kwargs)
         task.return_value = rv
 
     def get_children(self, node: Node) -> list[Node]:
@@ -335,9 +336,9 @@ class DriveProxy(object):
         assert_off_main_thread()
 
         node_list = await drive.find_nodes_by_regex(*task.args, **task.kwargs)
-        path_list = [drive.get_path(node) for node in node_list]
+        path_list = [drive.resolve_path(node) for node in node_list]
         path_list = await asyncio.gather(*path_list)
-        id_list = [node.id_ for node in node_list]
+        id_list = [node.id for node in node_list]
         rv = zip(id_list, path_list)
         task.return_value = list(rv)
 
@@ -359,7 +360,7 @@ class DriveProxy(object):
         task.return_value = rv
 
     def get_hash_list(
-        self, cwd: Node, path_or_id_list: list[str]
+        self, cwd: Node, path_or_id_list: tuple[str, ...]
     ) -> list[tuple[str, str]]:
         task = OffMainThreadTask(
             action="get_hash_list",
@@ -380,7 +381,7 @@ class DriveProxy(object):
         cwd = task.args[0]
         path_or_id_list = task.args[1]
 
-        base_path = await drive.get_path(cwd)
+        base_path = await drive.resolve_path(cwd)
         node_list = [
             get_node_by_path_or_id(drive, base_path, path_or_id)
             for path_or_id in path_or_id_list
@@ -403,26 +404,27 @@ class DriveProxy(object):
     async def _create_folder(self, drive: Drive, task: "OffMainThreadTask") -> None:
         assert_off_main_thread()
 
-        rv = await drive.create_folder(*task.args, **task.kwargs)
+        rv = await drive.create_directory(*task.args, **task.kwargs)
         task.return_value = rv
 
 
 class OffMainThreadTask(object):
-    def __init__(self, action: str, args: tuple[Any], kwargs=dict[str, Any]) -> None:
+    def __init__(
+        self, action: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> None:
         self._action = action
         self._args = args
         self._kwargs = kwargs
-        self._done = threading.Condition()
-        self._raii = None
-        self.return_value = None
+        self._done = Condition()
+        self.return_value: Any = None
 
-    def __enter__(self) -> threading.Condition:
+    def __enter__(self) -> Condition:
         with contextlib.ExitStack() as stack:
             stack.enter_context(self._done)
             self._raii = stack.pop_all()
         return self._done
 
-    def __exit__(self, et, ev, tb) -> bool:
+    def __exit__(self, et: Any, ev: Any, tb: Any) -> None:
         self._raii.close()
 
     @property
@@ -430,7 +432,7 @@ class OffMainThreadTask(object):
         return self._action
 
     @property
-    def args(self) -> tuple[Any]:
+    def args(self) -> tuple[Any, ...]:
         return self._args
 
     @property
@@ -438,9 +440,9 @@ class OffMainThreadTask(object):
         return self._kwargs
 
 
-def interact(factory: DriveFactory, home_node: Node) -> None:
-    with DriveProxy(factory) as drive:
-        context = ShellContext(drive, home_node)
+def interact(drive: Drive, home_node: Node) -> None:
+    with DriveProxy(drive) as proxy:
+        context = ShellContext(proxy, home_node)
 
         import readline
 
@@ -488,11 +490,11 @@ def normalize_path(
     return path
 
 
-def parse_completion(whole_text, end_index):
+def parse_completion(whole_text: str, end_index: int) -> tuple[TokenType, str]:
     lexer = shlex.shlex(whole_text, posix=True)
     lexer.whitespace_split = True
 
-    cmd = []
+    cmd: list[tuple[int, str]] = []
     offset = 0
 
     while True:
@@ -527,7 +529,9 @@ def parse_completion(whole_text, end_index):
 
 
 def assert_off_main_thread():
-    assert threading.current_thread() is not threading.main_thread()
+    from threading import current_thread, main_thread
+
+    assert current_thread() is not main_thread()
 
 
 async def get_node_by_path_or_id(

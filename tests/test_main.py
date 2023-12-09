@@ -1,41 +1,38 @@
-from contextlib import AsyncExitStack
 from io import StringIO
 from pathlib import PurePath
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
-from wcpan.drive.cli.main import amain
+from wcpan.drive.core.types import Drive
+from wcpan.drive.cli._main import amain
 
-from .util import setup_drive_factory
+from ._lib import create_amock, aexpect
 
 
 class TestMain(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        async with AsyncExitStack() as stack:
-            FakeDriveFactory = stack.enter_context(
-                patch("wcpan.drive.cli.main.DriveFactory")
-            )
-            self._drive = setup_drive_factory(FakeDriveFactory)
-            self._raii = stack.pop_all()
-
-    async def asyncTearDown(self) -> None:
-        await self._raii.aclose()
+        factory = self.enterContext(
+            patch("wcpan.drive.cli._main.create_drive_from_config")
+        )
+        self._drive = create_amock(Drive)
+        factory.return_value.__aenter__.return_value = self._drive
+        factory.return_value.__aexit__.return_value = None
 
     @patch("sys.stderr", new_callable=StringIO)
-    async def testMkdirNoArgs(self, stderr):
+    async def testMkdirNoArgs(self, stderr: StringIO):
         with self.assertRaises(SystemExit):
             await amain(["", "mkdir"])
 
     @patch("sys.stderr", new_callable=StringIO)
-    async def testMkdirWithPath(self, stderr):
+    async def testMkdirWithPath(self, stderr: StringIO):
         parent_node = MagicMock()
-        self._drive.get_node_by_path.return_value = parent_node
+        aexpect(self._drive.get_node_by_path).return_value = parent_node
 
-        rv = await amain(["", "mkdir", "/var/log"])
+        rv = await amain(["", "-cc.yaml", "mkdir", "/var/log"])
         self.assertEqual(rv, 0)
 
         path = PurePath("/var/log")
-        self._drive.get_node_by_path.assert_called_once_with(path.parent)
-        self._drive.create_folder.assert_called_once_with(
-            parent_node, path.name, exist_ok=True
+        aexpect(self._drive.get_node_by_path).assert_called_once_with(path.parent)
+        aexpect(self._drive.create_directory).assert_called_once_with(
+            path.name, parent_node, exist_ok=True
         )

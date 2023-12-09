@@ -1,6 +1,6 @@
 import sys
 
-from .main import main
+from ._main import main
 
 
 sys.exit(main())

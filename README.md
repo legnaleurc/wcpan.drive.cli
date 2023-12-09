@@ -2,7 +2,7 @@
 
 Command line tool for `wcpan.drive`.
 
-This package needs a driver to actually work with a cloud drive.
+This package needs plugins to actually work with a drive.
 
 ## Config
 
