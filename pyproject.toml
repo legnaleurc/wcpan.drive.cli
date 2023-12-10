@@ -18,8 +18,8 @@ python = "^3.12"
 Pillow = ">=9,<11"
 PyYAML = "^6.0.1"
 wcpan-drive-core = "^3.1.0"
-wcpan-logging = "^2.0.1"
-wcpan-queue = "^7.0.0"
+wcpan-logging = "^2.0.3"
+wcpan-queue = "^7.2.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.11.0"
