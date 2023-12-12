@@ -15,7 +15,7 @@ def add_usage_command(commands: SubCommand):
     )
     usage_parser.add_argument("id_or_path", type=str, nargs="+")
     add_bool_argument(usage_parser, "comma")
-    usage_parser.set_defaults(action=_action_usage, comma=False)
+    usage_parser.set_defaults(action=_action_usage, comma=True)
 
 
 async def _action_usage(drive: Drive, args: Namespace) -> int:
