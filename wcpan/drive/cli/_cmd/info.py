@@ -7,18 +7,20 @@ from .._lib import print_as_yaml
 
 
 def add_info_command(commands: SubCommand):
-    info_parser = commands.add_parser(
+    parser = commands.add_parser(
         "info",
         aliases=["i"],
         help="display file information [offline]",
     )
-    info_parser.set_defaults(action=_action_info)
-    info_parser.add_argument("id_or_path", type=str)
+    parser.set_defaults(action=_action_info)
+    parser.add_argument("id_or_path", type=str)
 
 
-async def _action_info(drive: Drive, args: Namespace) -> int:
+async def _action_info(drive: Drive, kwargs: Namespace) -> int:
     from dataclasses import asdict
 
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
+    id_or_path: str = kwargs.id_or_path
+
+    node = await get_node_by_id_or_path(drive, id_or_path)
     print_as_yaml(asdict(node))
     return 0

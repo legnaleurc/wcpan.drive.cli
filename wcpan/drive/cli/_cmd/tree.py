@@ -14,8 +14,10 @@ def add_tree_command(commands: SubCommand):
     tree_parser.add_argument("id_or_path", type=str)
 
 
-async def _action_tree(drive: Drive, args: Namespace) -> int:
-    node = await get_node_by_id_or_path(drive, args.id_or_path)
+async def _action_tree(drive: Drive, kwargs: Namespace) -> int:
+    id_or_path: str = kwargs.id_or_path
+
+    node = await get_node_by_id_or_path(drive, id_or_path)
     await _traverse_node(drive, node, 0)
     return 0
 

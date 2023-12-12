@@ -7,23 +7,23 @@ from .lib import SubCommand, add_bool_argument, for_k_av
 
 
 def add_find_command(commands: SubCommand):
-    find_parser = commands.add_parser(
+    parser = commands.add_parser(
         "find",
         aliases=["f"],
         help="find files/folders by pattern [offline]",
     )
-    add_bool_argument(find_parser, "id_only")
-    add_bool_argument(find_parser, "include_trash")
-    find_parser.add_argument("pattern", type=str)
-    find_parser.set_defaults(action=_action_find, id_only=False, include_trash=False)
+    add_bool_argument(parser, "id_only")
+    add_bool_argument(parser, "include_trash")
+    parser.add_argument("pattern", type=str)
+    parser.set_defaults(action=_action_find, id_only=False, include_trash=False)
 
 
-async def _action_find(drive: Drive, args: Namespace) -> int:
-    pattern: str = args.pattern
-    id_only: bool = args.id_only
+async def _action_find(drive: Drive, kwargs: Namespace) -> int:
+    pattern: str = kwargs.pattern
+    id_only: bool = kwargs.id_only
 
     nodes = await drive.find_nodes_by_regex(pattern)
-    if not args.include_trash:
+    if not kwargs.include_trash:
         nodes = (_ for _ in nodes if not _.is_trashed)
 
     if id_only:

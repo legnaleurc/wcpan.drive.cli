@@ -6,15 +6,15 @@ from .lib import SubCommand
 
 
 def add_auth_command(commands: SubCommand):
-    auth_parser = commands.add_parser(
+    parser = commands.add_parser(
         "auth",
         aliases=["a"],
         help="authorize user",
     )
-    auth_parser.set_defaults(action=_action_auth)
+    parser.set_defaults(action=_action_auth)
 
 
-async def _action_auth(drive: Drive, args: Namespace) -> int:
+async def _action_auth(drive: Drive, kwargs: Namespace) -> int:
     url = await drive.get_oauth_url()
     print("Access the following URL to authorize user:\n")
     print(url)

@@ -10,20 +10,20 @@ from .lib import SubCommand, require_authorized, get_path_by_id_or_path
 
 
 def add_move_command(commands: SubCommand):
-    mv_parser = commands.add_parser(
+    parser = commands.add_parser(
         "rename",
         aliases=["mv"],
         help="rename file/folder",
     )
-    mv_parser.set_defaults(action=_action_rename)
-    mv_parser.add_argument("source_id_or_path", type=str, nargs="+")
-    mv_parser.add_argument("destination_path", type=str)
+    parser.set_defaults(action=_action_rename)
+    parser.add_argument("source_id_or_path", type=str, nargs="+")
+    parser.add_argument("destination_path", type=str)
 
 
 @require_authorized
-async def _action_rename(drive: Drive, args: Namespace) -> int:
-    src_list: list[str] = args.source_id_or_path
-    dst_path = PurePath(args.destination_path)
+async def _action_rename(drive: Drive, kwargs: Namespace) -> int:
+    src_list: list[str] = kwargs.source_id_or_path
+    dst_path = PurePath(kwargs.destination_path)
     rv = 0
     for _ in as_completed(_rename_node(drive, _, dst_path) for _ in src_list):
         try:

@@ -8,19 +8,19 @@ from .lib import SubCommand, add_bool_argument, for_k_av, get_node_by_id_or_path
 
 
 def add_usage_command(commands: SubCommand):
-    usage_parser = commands.add_parser(
+    parser = commands.add_parser(
         "usage",
         aliases=["du"],
         help="calculate space usage for files, recursively for folders [offline]",
     )
-    usage_parser.add_argument("id_or_path", type=str, nargs="+")
-    add_bool_argument(usage_parser, "comma")
-    usage_parser.set_defaults(action=_action_usage, comma=True)
+    parser.add_argument("id_or_path", type=str, nargs="+")
+    add_bool_argument(parser, "comma")
+    parser.set_defaults(action=_action_usage, comma=True)
 
 
-async def _action_usage(drive: Drive, args: Namespace) -> int:
-    src_list: list[str] = args.id_or_path
-    use_comma: bool = args.comma
+async def _action_usage(drive: Drive, kwargs: Namespace) -> int:
+    src_list: list[str] = kwargs.id_or_path
+    use_comma: bool = kwargs.comma
 
     rv = 0
     for _ in as_completed(for_k_av(_, _get_usage(drive, _)) for _ in src_list):
