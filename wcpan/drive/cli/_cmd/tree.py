@@ -3,6 +3,7 @@ from argparse import Namespace
 from wcpan.drive.core.types import Drive, Node
 
 from .lib import SubCommand, get_node_by_id_or_path
+from .._lib import cout
 
 
 def add_tree_command(commands: SubCommand):
@@ -39,4 +40,4 @@ async def _traverse_node(drive: Drive, node: Node, level: int) -> None:
 
 def _print_node(name: str, level: int) -> None:
     indention = " " * level
-    print(indention + name)
+    cout(indention + name)

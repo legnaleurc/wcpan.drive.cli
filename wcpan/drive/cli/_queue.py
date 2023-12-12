@@ -2,13 +2,12 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
 from concurrent.futures import Executor
 from contextlib import contextmanager
-from logging import getLogger, Logger
 from pathlib import Path
 
 from wcpan.drive.core.types import Drive
 from wcpan.queue import AioQueue
 
-from ._lib import get_hash
+from ._lib import get_hash, cout, cerr
 
 
 class AbstractHandler[S, D](metaclass=ABCMeta):
@@ -62,15 +61,16 @@ class ProgressTracker:
 
     @contextmanager
     def collect(self, name: str):
-        _L().info(f"[{self._now}/{self._total}] [B] {name}")
+        cout(f"[ ] {name}")
         try:
             yield
-        except Exception:
+        except Exception as e:
             self._error += 1
+            cerr(f"[!] {name}, reason: {e}")
             raise
         finally:
             self._now += 1
-            _L().info(f"[{self._now}/{self._total}] [E] {name}")
+            cout(f"[*] [{self._now}/{self._total}] {name}")
 
     @property
     def has_error(self) -> bool:
@@ -127,13 +127,12 @@ async def _walk_directory[
     handler: AbstractHandler[S, D],
     tracker: ProgressTracker,
 ) -> None:
-    with tracker.collect(handler.format_source(src)):
-        try:
+    try:
+        with tracker.collect(handler.format_source(src)):
             new_directory = await handler.do_directory(src, dst)
             children = await handler.get_children(src)
-        except Exception:
-            _L().exception("directory failed")
-            return
+    except Exception:
+        return
 
     for child in children:
         await queue.push(
@@ -146,13 +145,8 @@ async def _walk_directory[
 async def _walk_file[
     S, D
 ](src: S, dst: D, *, handler: AbstractHandler[S, D], tracker: ProgressTracker) -> None:
-    with tracker.collect(handler.format_source(src)):
-        try:
+    try:
+        with tracker.collect(handler.format_source(src)):
             await handler.do_file(src, dst)
-        except Exception:
-            _L().exception("file failed")
-            return
-
-
-def _L() -> Logger:
-    return getLogger(__name__)
+    except Exception:
+        return

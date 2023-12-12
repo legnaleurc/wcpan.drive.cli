@@ -3,7 +3,7 @@ from argparse import Namespace
 from wcpan.drive.core.types import Drive
 
 from .lib import SubCommand, add_bool_argument, require_authorized, add_help_message
-from .._lib import print_as_yaml
+from .._lib import print_as_yaml, cout
 
 
 def add_trash_command(commands: SubCommand):
@@ -59,9 +59,9 @@ async def _action_trash_usage(drive: Drive, kwargs: Namespace) -> int:
     node_list = await drive.get_trashed_nodes()
     rv = sum(_.size for _ in node_list)
     if comma:
-        print(f"{rv:,}")
+        cout(f"{rv:,}")
     else:
-        print(f"{rv}")
+        cout(f"{rv}")
     return 0
 
 
@@ -71,20 +71,20 @@ async def _action_trash_purge(drive: Drive, kwargs: Namespace) -> int:
 
     node_list = await drive.get_trashed_nodes()
     count = len(node_list)
-    print(f"Purging {count} items in trash ...")
+    cout(f"Purging {count} items in trash ...")
 
     if ask:
         answer = input("Are you sure? [y/N]")
         answer = answer.lower()
         if answer != "y":
-            print("Aborted.")
+            cout("Aborted.")
             return 0
 
     try:
         await drive.purge_trash()
     except Exception as e:
-        print(str(e))
+        cout(str(e))
         return 1
 
-    print("Done.")
+    cout("Done.")
     return 0

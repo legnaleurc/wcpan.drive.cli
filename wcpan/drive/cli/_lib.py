@@ -28,6 +28,14 @@ def get_hash(local_path: Path, create_hasher: CreateHasher) -> str:
     return run(calc())
 
 
+def cout(*values: object) -> None:
+    print(*values, file=sys.stdout, flush=True)
+
+
+def cerr(*values: object) -> None:
+    print(*values, file=sys.stderr, flush=True)
+
+
 def print_as_yaml(data: Any) -> None:
     yaml.safe_dump(
         data,

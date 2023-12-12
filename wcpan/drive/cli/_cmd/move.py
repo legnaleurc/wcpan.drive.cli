@@ -1,12 +1,12 @@
 from asyncio import as_completed
 from argparse import Namespace
-from logging import getLogger
 from pathlib import PurePath
 
 from wcpan.drive.core.types import Drive
 from wcpan.drive.core.lib import move_node
 
 from .lib import SubCommand, require_authorized, get_path_by_id_or_path
+from .._lib import cerr
 
 
 def add_move_command(commands: SubCommand):
@@ -37,11 +37,11 @@ async def _rename_node(drive: Drive, id_or_path: str, dst: PurePath) -> None:
     try:
         path = await get_path_by_id_or_path(drive, id_or_path)
     except Exception:
-        getLogger(__name__).error(f"{id_or_path} does not exist")
+        cerr(f"{id_or_path} does not exist")
         raise
 
     try:
         await move_node(drive, path, dst)
     except Exception as e:
-        getLogger(__name__).error(f"failed to move {id_or_path}, reason: {str(e)}")
+        cerr(f"failed to move {id_or_path}, reason: {str(e)}")
         raise

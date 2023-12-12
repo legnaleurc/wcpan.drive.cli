@@ -9,7 +9,7 @@ from queue import Queue
 
 from wcpan.drive.core.types import Node, Drive
 
-from ._lib import print_as_yaml
+from ._lib import print_as_yaml, cout
 
 
 class TokenType(enum.Enum):
@@ -71,14 +71,14 @@ class ShellContext(object):
 
         command = cmd[0]
         if command not in self._actions:
-            print(f"unknown command {command}")
+            cout(f"unknown command {command}")
             return
 
         action = self._actions[command]
         try:
             action(*cmd[1:])
         except TypeError as e:
-            print(e)
+            cout(e)
 
     def _get_global(self, prefix: str) -> list[str]:
         cmd = self._actions.keys()
@@ -93,7 +93,7 @@ class ShellContext(object):
     def _help(self) -> None:
         cmd = self._actions.keys()
         for c in cmd:
-            print(c)
+            cout(c)
 
     def _list(self, src: str | None = None) -> None:
         if not src:
@@ -102,12 +102,12 @@ class ShellContext(object):
             path = normalize_path(self._drive, self._cwd, src)
             node = self._drive.get_node_by_path(path)
             if not node:
-                print(f"{src} not found")
+                cout(f"{src} not found")
                 return
 
         children = self._drive.get_children(node)
         for child in children:
-            print(child.name)
+            cout(child.name)
 
     def _chdir(self, src: str | None = None) -> None:
         if not src:
@@ -117,17 +117,17 @@ class ShellContext(object):
         path = normalize_path(self._drive, self._cwd, src)
         node = self._drive.get_node_by_path(path)
         if not node:
-            print(f"unknown path {src}")
+            cout(f"unknown path {src}")
             return
         if not node.is_directory:
-            print(f"{src} is not a folder")
+            cout(f"{src} is not a folder")
             return
 
         self._cwd = node
 
     def _mkdir(self, src: str) -> None:
         if not src:
-            print(f"invalid name")
+            cout(f"invalid name")
             return
 
         self._drive.create_folder(self._cwd, src)
@@ -137,42 +137,42 @@ class ShellContext(object):
         self._drive.sync()
 
     def _pwd(self) -> None:
-        print(self._drive.get_path(self._cwd))
+        cout(self._drive.get_path(self._cwd))
 
     def _find(self, src: str) -> None:
         rv = self._drive.search_by_regex(src)
         for [id_, path] in rv:
-            print(f"{id_} - {path}")
+            cout(f"{id_} - {path}")
 
     def _info(self, src: str) -> None:
         from dataclasses import asdict
 
         node = self._drive.get_node_by_id(src)
         if not node:
-            print("null")
+            cout("null")
         else:
             print_as_yaml(asdict(node))
 
     def _hash(self, *args: str) -> None:
         rv = self._drive.get_hash_list(self._cwd, args)
         for [path_or_id, hash_] in rv:
-            print(f"{hash_} - {path_or_id}")
+            cout(f"{hash_} - {path_or_id}")
 
     def _id_to_path(self, src: str) -> None:
         node = self._drive.get_node_by_id(src)
         if not node:
-            print(f"{src} not found")
+            cout(f"{src} not found")
             return
         path = self._drive.get_path(node)
-        print(path)
+        cout(path)
 
     def _path_to_id(self, src: str) -> None:
         path = normalize_path(self._drive, self._cwd, src)
         node = self._drive.get_node_by_path(path)
         if not node:
-            print(f"{src} not found")
+            cout(f"{src} not found")
             return
-        print(node.id)
+        cout(node.id)
 
 
 class ChildrenCache(object):
@@ -240,13 +240,13 @@ class DriveProxy(object):
                     break
 
                 if task.action not in self._actions:
-                    print(f"unknown action {task.action}")
+                    cout(f"unknown action {task.action}")
                     return
 
                 action = self._actions[task.action]
                 await action(self._drive, task)
             except Exception as e:
-                print(e)
+                cout(e)
             finally:
                 if task:
                     with task as cv:
@@ -267,7 +267,7 @@ class DriveProxy(object):
         assert_off_main_thread()
 
         async for change in drive.sync():
-            print(change)
+            cout(change)
         task.return_value = None
 
     def get_node_by_path(self, path: pathlib.PurePath) -> Node | None:
@@ -460,7 +460,7 @@ def interact(drive: Drive, home_node: Node) -> None:
             context.execute(line)
 
     # reset anchor
-    print()
+    cout()
 
 
 def resolve_path(

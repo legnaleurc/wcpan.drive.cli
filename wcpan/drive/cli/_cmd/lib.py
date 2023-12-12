@@ -8,6 +8,8 @@ from pathlib import PurePath
 from wcpan.drive.core.exceptions import UnauthorizedError
 from wcpan.drive.core.types import Drive, Node
 
+from .._lib import cout
+
 # Need official type support
 from argparse import _SubParsersAction  # type: ignore
 
@@ -18,7 +20,7 @@ type SubCommand = _SubParsersAction[ArgumentParser]
 def add_help_message(parser: ArgumentParser) -> None:
     sout = StringIO()
     parser.print_help(sout)
-    fallback = partial(print, sout.getvalue())
+    fallback = partial(cout, sout.getvalue())
     parser.set_defaults(action=None, fallback_action=fallback)
 
 
@@ -48,7 +50,7 @@ def require_authorized[
         try:
             return await fn(*args, **kwargs)
         except UnauthorizedError:
-            print("not authorized")
+            cout("not authorized")
             return 1
 
     return action

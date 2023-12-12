@@ -4,6 +4,7 @@ from argparse import Namespace
 from wcpan.drive.core.types import Drive
 
 from .lib import SubCommand, add_bool_argument, for_k_av
+from .._lib import cout
 
 
 def add_find_command(commands: SubCommand):
@@ -28,7 +29,7 @@ async def _action_find(drive: Drive, kwargs: Namespace) -> int:
 
     if id_only:
         for node in nodes:
-            print(node.id)
+            cout(node.id)
         return 0
 
     pairs = [
@@ -37,6 +38,6 @@ async def _action_find(drive: Drive, kwargs: Namespace) -> int:
     ]
     pairs.sort(key=lambda _: _[1])
     for id_, path in pairs:
-        print(f"{id_}: {path}")
+        cout(f"{id_}: {path}")
 
     return 0

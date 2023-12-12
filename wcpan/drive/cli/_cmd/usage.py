@@ -1,10 +1,10 @@
 from asyncio import as_completed
 from argparse import Namespace
-from logging import getLogger
 
 from wcpan.drive.core.types import Drive
 
 from .lib import SubCommand, add_bool_argument, for_k_av, get_node_by_id_or_path
+from .._lib import cout, cerr
 
 
 def add_usage_command(commands: SubCommand):
@@ -27,9 +27,9 @@ async def _action_usage(drive: Drive, kwargs: Namespace) -> int:
         try:
             src, usage = await _
             if use_comma:
-                print(f"{usage:,} - {src}")
+                cout(f"{usage:,} - {src}")
             else:
-                print(f"{usage} - {src}")
+                cout(f"{usage} - {src}")
         except Exception:
             rv = 1
     return rv
@@ -39,7 +39,7 @@ async def _get_usage(drive: Drive, id_or_path: str) -> int:
     try:
         node = await get_node_by_id_or_path(drive, id_or_path)
     except Exception:
-        getLogger(__name__).error(f"{id_or_path} does not exist")
+        cerr(f"{id_or_path} does not exist")
         raise
 
     if not node.is_directory:

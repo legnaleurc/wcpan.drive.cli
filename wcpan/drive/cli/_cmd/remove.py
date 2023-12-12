@@ -1,6 +1,5 @@
 from asyncio import as_completed
 from argparse import Namespace
-from logging import getLogger
 
 from wcpan.drive.core.types import Drive
 
@@ -10,6 +9,7 @@ from .lib import (
     require_authorized,
     get_node_by_id_or_path,
 )
+from .._lib import cerr
 
 
 def add_remove_command(commands: SubCommand):
@@ -40,13 +40,11 @@ async def _trash_node(drive: Drive, id_or_path: str, trashed: bool) -> None:
     try:
         node = await get_node_by_id_or_path(drive, id_or_path)
     except Exception:
-        getLogger(__name__).error(f"{id_or_path} does not exist")
+        cerr(f"{id_or_path} does not exist")
         raise
 
     try:
         await drive.move(node, trashed=trashed)
     except Exception as e:
-        getLogger(__name__).exception(
-            f"operation failed on {id_or_path}, reason: {str(e)}"
-        )
+        cerr(f"operation failed on {id_or_path}, reason: {str(e)}")
         raise

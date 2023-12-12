@@ -4,6 +4,7 @@ from wcpan.drive.core.types import Drive
 from wcpan.drive.core.exceptions import NodeNotFoundError
 
 from .lib import SubCommand, get_node_by_id_or_path
+from .._lib import cout
 from .._interaction import interact
 
 
@@ -22,11 +23,11 @@ async def _action_shell(drive: Drive, args: Namespace) -> int:
     try:
         node = await get_node_by_id_or_path(drive, id_or_path if id_or_path else "/")
     except NodeNotFoundError:
-        print(f"{id_or_path} does not exist")
+        cout(f"{id_or_path} does not exist")
         return 1
 
     if not node.is_directory:
-        print(f"{id_or_path} is not a folder")
+        cout(f"{id_or_path} is not a folder")
         return 1
 
     interact(drive, node)
