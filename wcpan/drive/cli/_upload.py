@@ -41,11 +41,14 @@ class UploadHandler(AbstractHandler[Path, Node]):
 
     @override
     async def do_file(self, src: Path, dst: Node) -> None:
+        from mimetypes import guess_type
+
         node = await _else_none(self.drive.get_child_by_name(src.name, dst))
         if not node:
+            type_, _ext = guess_type(src)
             media_info = await get_media_info(src)
             node = await upload_file_from_local(
-                self.drive, src, dst, media_info=media_info
+                self.drive, src, dst, mime_type=type_, media_info=media_info
             )
             if not node:
                 raise Exception("upload failed")
