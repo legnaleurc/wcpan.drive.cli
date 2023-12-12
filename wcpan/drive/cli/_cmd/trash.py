@@ -12,15 +12,24 @@ def add_trash_command(commands: SubCommand):
         help="actions for trashes",
     )
     commands = parser.add_subparsers()
-    list_parser = commands.add_parser("list", help="list trash [offline]")
-    add_bool_argument(list_parser, "flatten")
-    list_parser.set_defaults(
+
+    parser = commands.add_parser("list", help="list trash [offline]")
+    add_bool_argument(parser, "flatten")
+    parser.set_defaults(
         action=_action_trash_list,
         flatten=False,
     )
-    purge_parser = commands.add_parser("purge", help="purge trash")
-    add_bool_argument(purge_parser, "ask", short_false="y")
-    purge_parser.set_defaults(
+
+    parser = commands.add_parser("usage", help="trash size usage [offline]")
+    add_bool_argument(parser, "comma")
+    parser.set_defaults(
+        action=_action_trash_usage,
+        comma=True,
+    )
+
+    parser = commands.add_parser("purge", help="purge trash")
+    add_bool_argument(parser, "ask", short_false="y")
+    parser.set_defaults(
         action=_action_trash_purge,
         ask=True,
     )
@@ -39,6 +48,17 @@ async def _action_trash_list(drive: Drive, args: Namespace) -> int:
         for _ in node_list
     ]
     print_as_yaml(rv)
+    return 0
+
+
+async def _action_trash_usage(drive: Drive, kwargs: Namespace) -> int:
+    comma: bool = kwargs.comma
+    node_list = await drive.get_trashed_nodes()
+    rv = sum(_.size for _ in node_list)
+    if comma:
+        print(f"{rv:,}")
+    else:
+        print(f"{rv}")
     return 0
 
 
