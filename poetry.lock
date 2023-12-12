@@ -263,16 +263,16 @@ files = [
 
 [[package]]
 name = "wcpan-queue"
-version = "7.2.0"
+version = "7.2.1"
 description = "An utility for asyncio.Queue."
 optional = false
 python-versions = ">=3.12,<4.0"
 files = [
-    {file = "wcpan_queue-7.2.0-py3-none-any.whl", hash = "sha256:f620902d5ffd979b3e638a7cc6f79907b75c20088011b3e014a562765880414d"},
-    {file = "wcpan_queue-7.2.0.tar.gz", hash = "sha256:5c374f2c34b56325b0a49ce66f04c6dd39f2d825683b6d56386649f2a730019a"},
+    {file = "wcpan_queue-7.2.1-py3-none-any.whl", hash = "sha256:1688ac9727ad943d88972cc5cc591918e344fd499893f7f81cb264fc6489eba9"},
+    {file = "wcpan_queue-7.2.1.tar.gz", hash = "sha256:c04e3bb3b9eb1ceb1d2b2df8ed5fa5ae53a7e47375c9d5eee9a27a2ea269ed46"},
 ]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "2ec2a6b1e587e7fb0acb0a6fefd3df0a7d2a43656549e4b36019aa2f3f07166d"
+content-hash = "e66939e0ef5b0be67f84f2bdd14a3cc835a2cf69ac8a21cfba3912429c935e94"
