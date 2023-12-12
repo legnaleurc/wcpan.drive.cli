@@ -13,23 +13,23 @@ def add_trash_command(commands: SubCommand):
     )
     commands = parser.add_subparsers()
 
-    parser = commands.add_parser("list", help="list trash [offline]")
-    add_bool_argument(parser, "flatten")
-    parser.set_defaults(
+    list_parser = commands.add_parser("list", help="list trash [offline]")
+    add_bool_argument(list_parser, "flatten")
+    list_parser.set_defaults(
         action=_action_trash_list,
         flatten=False,
     )
 
-    parser = commands.add_parser("usage", help="trash size usage [offline]")
-    add_bool_argument(parser, "comma")
-    parser.set_defaults(
+    usage_parser = commands.add_parser("usage", help="trash size usage [offline]")
+    add_bool_argument(usage_parser, "comma")
+    usage_parser.set_defaults(
         action=_action_trash_usage,
         comma=True,
     )
 
-    parser = commands.add_parser("purge", help="purge trash")
-    add_bool_argument(parser, "ask", short_false="y")
-    parser.set_defaults(
+    purge_parser = commands.add_parser("purge", help="purge trash")
+    add_bool_argument(purge_parser, "ask", short_false="y")
+    purge_parser.set_defaults(
         action=_action_trash_purge,
         ask=True,
     )
@@ -37,8 +37,10 @@ def add_trash_command(commands: SubCommand):
     add_help_message(parser)
 
 
-async def _action_trash_list(drive: Drive, args: Namespace) -> int:
-    node_list = await drive.get_trashed_nodes(args.flatten)
+async def _action_trash_list(drive: Drive, kwargs: Namespace) -> int:
+    flatten: bool = kwargs.flatten
+
+    node_list = await drive.get_trashed_nodes(flatten)
     rv = [
         {
             "id": _.id,
@@ -53,6 +55,7 @@ async def _action_trash_list(drive: Drive, args: Namespace) -> int:
 
 async def _action_trash_usage(drive: Drive, kwargs: Namespace) -> int:
     comma: bool = kwargs.comma
+
     node_list = await drive.get_trashed_nodes()
     rv = sum(_.size for _ in node_list)
     if comma:
@@ -63,8 +66,8 @@ async def _action_trash_usage(drive: Drive, kwargs: Namespace) -> int:
 
 
 @require_authorized
-async def _action_trash_purge(drive: Drive, args: Namespace) -> int:
-    ask: bool = args.ask
+async def _action_trash_purge(drive: Drive, kwargs: Namespace) -> int:
+    ask: bool = kwargs.ask
 
     node_list = await drive.get_trashed_nodes()
     count = len(node_list)
