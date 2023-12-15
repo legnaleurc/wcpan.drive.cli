@@ -61,7 +61,6 @@ class ProgressTracker:
 
     @contextmanager
     def collect(self, name: str):
-        cout(f"[ ] {name}")
         try:
             yield
         except Exception as e:
@@ -70,7 +69,7 @@ class ProgressTracker:
             raise
         finally:
             self._now += 1
-            cout(f"[*] [{self._now}/{self._total}] {name}")
+            cout(f"[{self._now}/{self._total}] {name}")
 
     @property
     def has_error(self) -> bool:
