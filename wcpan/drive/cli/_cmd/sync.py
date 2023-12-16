@@ -1,8 +1,8 @@
 from argparse import Namespace
 from dataclasses import asdict
-from typing import TypeGuard
 
-from wcpan.drive.core.types import Drive, ChangeAction, RemoveAction, UpdateAction
+from wcpan.drive.core.types import Drive
+from wcpan.drive.core.lib import dispatch_change
 
 from .lib import SubCommand, add_bool_argument, require_authorized
 from .._lib import cout, print_as_yaml
@@ -25,19 +25,12 @@ async def _action_sync(drive: Drive, kwargs: Namespace) -> int:
     count = 0
     async for change in drive.sync():
         if verbose:
-            if _is_remove(change):
-                print_as_yaml([change[1]])
-            if _is_update(change):
-                print_as_yaml([asdict(change[1])])
+            dispatch_change(
+                change,
+                on_remove=lambda _: print_as_yaml([_]),
+                on_update=lambda _: print_as_yaml([asdict(_)]),
+            )
         count += 1
     if not verbose:
         cout(f"{count}")
     return 0
-
-
-def _is_remove(change: ChangeAction) -> TypeGuard[RemoveAction]:
-    return change[0]
-
-
-def _is_update(change: ChangeAction) -> TypeGuard[UpdateAction]:
-    return not change[0]
