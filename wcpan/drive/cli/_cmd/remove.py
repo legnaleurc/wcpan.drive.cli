@@ -50,7 +50,7 @@ async def _action_remove(drive: Drive, kwargs: Namespace) -> int:
     return rv
 
 
-async def _trash_node(drive: Drive, id_or_path: str, trashed: bool) -> None:
+async def _trash_node(id_or_path: str, /, *, drive: Drive, trashed: bool) -> None:
     try:
         node = await get_node_by_id_or_path(drive, id_or_path)
     except Exception:
@@ -64,7 +64,7 @@ async def _trash_node(drive: Drive, id_or_path: str, trashed: bool) -> None:
         raise
 
 
-async def _purge_node(drive: Drive, id_or_path: str) -> None:
+async def _purge_node(id_or_path: str, /, *, drive: Drive) -> None:
     try:
         node = await get_node_by_id_or_path(drive, id_or_path)
     except Exception:
