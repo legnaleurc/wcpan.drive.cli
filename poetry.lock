@@ -241,13 +241,13 @@ files = [
 
 [[package]]
 name = "wcpan-drive-core"
-version = "4.0.1"
+version = "4.1.0"
 description = "asynchronous generic cloud drive library"
 optional = false
 python-versions = ">=3.12,<4.0"
 files = [
-    {file = "wcpan_drive_core-4.0.1-py3-none-any.whl", hash = "sha256:8b1b1143f92aabe22561af9045ee08b7f4c8377491856ba49bbd3acd521c8361"},
-    {file = "wcpan_drive_core-4.0.1.tar.gz", hash = "sha256:b8c70552f15e5e776ccdb73e287f5f3adf80020ad6416e3f2359a526d4fcb8ad"},
+    {file = "wcpan_drive_core-4.1.0-py3-none-any.whl", hash = "sha256:fcddef9014c4dbddbfaf925c994989a6d4a524fd7a5670c1a92eb83934f4c837"},
+    {file = "wcpan_drive_core-4.1.0.tar.gz", hash = "sha256:982f1b83cdce287cd91dd186fae85f2db07dd86874d38eb831935c24c56d3566"},
 ]
 
 [[package]]
@@ -275,4 +275,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8f8deedb1a3194d487fce020bf3763c72376a19bef44351237d86b191d000112"
+content-hash = "3f05c3afce0f6752ee349634d2d70e1707555719522006436beb55b537262fd1"
