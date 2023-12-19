@@ -1,7 +1,7 @@
 import json
 import math
 import sys
-from concurrent.futures import Executor
+from concurrent.futures import Executor, ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -102,3 +102,18 @@ async def get_media_info(local_path: Path) -> MediaInfo | None:
         return await get_video_info(local_path)
 
     return None
+
+
+def create_executor() -> Executor:
+    from multiprocessing import get_start_method
+
+    if get_start_method() == "spawn":
+        return ProcessPoolExecutor(initializer=_initialize_worker)
+    else:
+        return ProcessPoolExecutor()
+
+
+def _initialize_worker() -> None:
+    from signal import signal, SIG_IGN, SIGINT
+
+    signal(SIGINT, SIG_IGN)

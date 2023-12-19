@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 from collections.abc import Awaitable, Callable
-from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import wraps, partial
 from io import StringIO
 from pathlib import PurePath
@@ -74,18 +73,3 @@ async def get_path_by_id_or_path(drive: Drive, id_or_path: str) -> PurePath:
     node = await drive.get_node_by_id(id_or_path)
     path = await drive.resolve_path(node)
     return path
-
-
-def create_executor() -> Executor:
-    from multiprocessing import get_start_method
-
-    if get_start_method() == "spawn":
-        return ProcessPoolExecutor(initializer=_initialize_worker)
-    else:
-        return ProcessPoolExecutor()
-
-
-def _initialize_worker() -> None:
-    from signal import signal, SIG_IGN, SIGINT
-
-    signal(SIGINT, SIG_IGN)

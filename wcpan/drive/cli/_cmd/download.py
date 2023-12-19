@@ -4,7 +4,8 @@ from pathlib import Path
 
 from wcpan.drive.core.types import Drive
 
-from .lib import SubCommand, require_authorized, get_node_by_id_or_path, create_executor
+from .lib import SubCommand, require_authorized, get_node_by_id_or_path
+from ..lib import create_executor
 from .._download import download_list
 
 
