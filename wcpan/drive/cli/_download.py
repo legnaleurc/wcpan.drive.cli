@@ -7,16 +7,18 @@ from wcpan.drive.core.types import Node, Drive
 from wcpan.drive.core.lib import download_file_to_local
 
 from ._queue import AbstractHandler, walk_list
+from .lib import get_file_hash
 
 
 class DownloadHandler(AbstractHandler[Node, Path]):
     def __init__(self, *, drive: Drive, pool: Executor) -> None:
-        super().__init__(drive=drive, pool=pool)
+        self._drive = drive
+        self._pool = pool
 
     @override
     async def count_all(self, src: Node) -> int:
         total = 1
-        async for _r, d, f in self.drive.walk(src):
+        async for _r, d, f in self._drive.walk(src):
             total += len(d) + len(f)
         return total
 
@@ -36,7 +38,7 @@ class DownloadHandler(AbstractHandler[Node, Path]):
 
     @override
     async def get_children(self, src: Node) -> list[Node]:
-        return await self.drive.get_children(src)
+        return await self._drive.get_children(src)
 
     @override
     async def do_file(self, src: Node, dst: Path) -> None:
@@ -47,8 +49,8 @@ class DownloadHandler(AbstractHandler[Node, Path]):
         if local_src.exists():
             raise RuntimeError(f"{local_src} is not a file")
 
-        local_src = await download_file_to_local(self.drive, src, dst)
-        local_hash = await self.get_local_file_hash(local_src)
+        local_src = await download_file_to_local(self._drive, src, dst)
+        local_hash = await get_file_hash(local_src, pool=self._pool, drive=self._drive)
         if local_hash != src.hash:
             raise RuntimeError(f"{dst} checksum mismatch")
 

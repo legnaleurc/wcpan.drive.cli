@@ -28,7 +28,7 @@ def _get_hash_off_main(local_path: Path, create_hasher: CreateHasher) -> str:
     return run(calc())
 
 
-async def get_hash(path: Path, /, *, pool: Executor, drive: Drive) -> str:
+async def get_file_hash(path: Path, /, *, pool: Executor, drive: Drive) -> str:
     from asyncio import get_running_loop
 
     factory = await drive.get_hasher_factory()

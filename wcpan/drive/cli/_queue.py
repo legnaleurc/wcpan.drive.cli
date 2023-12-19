@@ -1,23 +1,13 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
-from concurrent.futures import Executor
 from contextlib import contextmanager
-from pathlib import Path
 
-from wcpan.drive.core.types import Drive
 from wcpan.queue import AioQueue
 
-from ._lib import get_hash, cout, cerr
+from ._lib import cout, cerr
 
 
 class AbstractHandler[S, D](metaclass=ABCMeta):
-    def __init__(self, *, drive: Drive, pool: Executor) -> None:
-        self.drive = drive
-        self._pool = pool
-
-    async def get_local_file_hash(self, local_path: Path) -> str:
-        return await get_hash(local_path, pool=self._pool, drive=self.drive)
-
     @abstractmethod
     async def count_all(self, src: S) -> int:
         raise NotImplementedError
