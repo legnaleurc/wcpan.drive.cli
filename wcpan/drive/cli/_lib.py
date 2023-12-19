@@ -1,4 +1,3 @@
-import asyncio
 import json
 import math
 import sys
@@ -62,6 +61,9 @@ def get_image_info(local_path: Path) -> MediaInfo:
 
 
 async def get_video_info(local_path: Path) -> MediaInfo:
+    from asyncio import create_subprocess_exec
+    from asyncio.subprocess import PIPE
+
     cmd = (
         "ffprobe",
         "-v",
@@ -75,12 +77,7 @@ async def get_video_info(local_path: Path) -> MediaInfo:
         "-i",
         str(local_path),
     )
-    cp = await asyncio.create_subprocess_exec(
-        *cmd,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
+    cp = await create_subprocess_exec(*cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, _err = await cp.communicate()
     data = json.loads(out)
     format_ = data["format"]
@@ -89,3 +86,19 @@ async def get_video_info(local_path: Path) -> MediaInfo:
     width = video["width"]
     height = video["height"]
     return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
+
+
+async def get_media_info(local_path: Path) -> MediaInfo | None:
+    from mimetypes import guess_type
+
+    type_, _ext = guess_type(local_path)
+    if not type_:
+        return None
+
+    if type_.startswith("image/"):
+        return get_image_info(local_path)
+
+    if type_.startswith("video/"):
+        return await get_video_info(local_path)
+
+    return None
