@@ -2,15 +2,16 @@ import asyncio
 import json
 import math
 import sys
-from typing import Any
+from concurrent.futures import Executor
 from pathlib import Path
+from typing import Any
 
 from PIL import Image
-from wcpan.drive.core.types import MediaInfo, CreateHasher
+from wcpan.drive.core.types import MediaInfo, CreateHasher, Drive
 import yaml
 
 
-def get_hash(local_path: Path, create_hasher: CreateHasher) -> str:
+def _get_hash_off_main(local_path: Path, create_hasher: CreateHasher) -> str:
     from asyncio import run
 
     CHUNK_SIZE = 64 * 1024
@@ -26,6 +27,14 @@ def get_hash(local_path: Path, create_hasher: CreateHasher) -> str:
         return await hasher.hexdigest()
 
     return run(calc())
+
+
+async def get_hash(path: Path, /, *, pool: Executor, drive: Drive) -> str:
+    from asyncio import get_running_loop
+
+    factory = await drive.get_hasher_factory()
+    loop = get_running_loop()
+    return await loop.run_in_executor(pool, _get_hash_off_main, path, factory)
 
 
 def cout(*values: object) -> None:

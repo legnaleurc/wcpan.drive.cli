@@ -16,13 +16,7 @@ class AbstractHandler[S, D](metaclass=ABCMeta):
         self._pool = pool
 
     async def get_local_file_hash(self, local_path: Path) -> str:
-        from asyncio import get_running_loop
-
-        create_hasher = await self.drive.get_hasher_factory()
-        loop = get_running_loop()
-        return await loop.run_in_executor(
-            self._pool, get_hash, local_path, create_hasher
-        )
+        return await get_hash(local_path, pool=self._pool, drive=self.drive)
 
     @abstractmethod
     async def count_all(self, src: S) -> int:
