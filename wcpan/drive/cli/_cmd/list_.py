@@ -3,7 +3,7 @@ from argparse import Namespace
 from wcpan.drive.core.types import Drive
 
 from .lib import SubCommand, get_node_by_id_or_path
-from .._lib import cout
+from .._lib import print_as_yaml
 
 
 def add_list_command(commands: SubCommand):
@@ -21,6 +21,6 @@ async def _action_list(drive: Drive, kwargs: Namespace) -> int:
 
     node = await get_node_by_id_or_path(drive, id_or_path)
     nodes = await drive.get_children(node)
-    for node in nodes:
-        cout(f"{node.id}: {node.name}")
+    nodes = {_.id: _.name for _ in nodes}
+    print_as_yaml(nodes)
     return 0
