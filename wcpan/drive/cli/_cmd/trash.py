@@ -7,32 +7,20 @@ from .._lib import print_as_yaml, cout
 
 
 def add_trash_command(commands: SubCommand):
-    parser = commands.add_parser(
-        "trash",
-        help="actions for trashes",
-    )
+    parser = commands.add_parser("trash", help="actions for trashes")
     commands = parser.add_subparsers()
 
     list_parser = commands.add_parser("list", help="list trash [offline]")
     add_bool_argument(list_parser, "flatten")
-    list_parser.set_defaults(
-        action=_action_trash_list,
-        flatten=False,
-    )
+    list_parser.set_defaults(action=_action_trash_list, flatten=False)
 
     usage_parser = commands.add_parser("usage", help="trash size usage [offline]")
     add_bool_argument(usage_parser, "comma")
-    usage_parser.set_defaults(
-        action=_action_trash_usage,
-        comma=True,
-    )
+    usage_parser.set_defaults(action=_action_trash_usage, comma=True)
 
     purge_parser = commands.add_parser("purge", help="purge trash")
     add_bool_argument(purge_parser, "ask", short_false="y")
-    purge_parser.set_defaults(
-        action=_action_trash_purge,
-        ask=True,
-    )
+    purge_parser.set_defaults(action=_action_trash_purge, ask=True)
 
     add_help_message(parser)
 
