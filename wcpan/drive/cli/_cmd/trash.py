@@ -41,11 +41,13 @@ async def _action_trash_list(drive: Drive, kwargs: Namespace) -> int:
     flatten: bool = kwargs.flatten
 
     node_list = await drive.get_trashed_nodes(flatten)
+    node_list.sort(key=lambda _: _.mtime)
     rv = [
         {
             "id": _.id,
             "name": _.name,
-            "modified": str(_.ctime),
+            "ctime": str(_.ctime),
+            "mtime": str(_.mtime),
         }
         for _ in node_list
     ]
