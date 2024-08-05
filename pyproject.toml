@@ -20,6 +20,7 @@ PyYAML = "^6.0.1"
 wcpan-drive-core = "^4.1.0"
 wcpan-logging = "^2.0.3"
 wcpan-queue = "^7.2.1"
+python-magic = "^0.4.27"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=23.11,<25.0"
