@@ -7,7 +7,6 @@ from typing import Any
 
 from PIL import Image
 from wcpan.drive.core.types import MediaInfo, CreateHasher, Drive
-import magic
 import yaml
 
 
@@ -56,7 +55,7 @@ def print_as_yaml(data: Any) -> None:
 
 
 def get_image_info(local_path: Path) -> MediaInfo:
-    image = Image.open(str(local_path)) # type: ignore
+    image = Image.open(str(local_path))  # type: ignore
     width, height = image.size
     return MediaInfo.image(width=width, height=height)
 
@@ -90,7 +89,9 @@ async def get_video_info(local_path: Path) -> MediaInfo:
 
 
 def get_mime_type(local_path: Path) -> str:
-    return magic.from_file(local_path, mime=True) # type: ignore
+    import magic
+
+    return magic.from_file(local_path, mime=True)  # type: ignore
 
 
 async def get_media_info(local_path: Path) -> MediaInfo | None:
