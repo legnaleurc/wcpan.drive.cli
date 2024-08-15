@@ -7,6 +7,7 @@ from typing import Any
 
 from PIL import Image
 from wcpan.drive.core.types import MediaInfo, CreateHasher, Drive
+import magic
 import yaml
 
 
@@ -88,17 +89,19 @@ async def get_video_info(local_path: Path) -> MediaInfo:
     return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
 
 
-async def get_media_info(local_path: Path) -> MediaInfo | None:
-    from mimetypes import guess_type
+def get_mime_type(local_path: Path) -> str:
+    return magic.from_file(local_path, mime=True)
 
-    type_, _ext = guess_type(local_path)
-    if not type_:
+
+async def get_media_info(local_path: Path) -> MediaInfo | None:
+    mime_type = get_mime_type(local_path)
+    if not mime_type:
         return None
 
-    if type_.startswith("image/"):
+    if mime_type.startswith("image/"):
         return get_image_info(local_path)
 
-    if type_.startswith("video/"):
+    if mime_type.startswith("video/"):
         return await get_video_info(local_path)
 
     return None
