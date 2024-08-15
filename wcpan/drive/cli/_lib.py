@@ -56,7 +56,7 @@ def print_as_yaml(data: Any) -> None:
 
 
 def get_image_info(local_path: Path) -> MediaInfo:
-    image = Image.open(str(local_path))
+    image = Image.open(str(local_path)) # type: ignore
     width, height = image.size
     return MediaInfo.image(width=width, height=height)
 
@@ -90,7 +90,7 @@ async def get_video_info(local_path: Path) -> MediaInfo:
 
 
 def get_mime_type(local_path: Path) -> str:
-    return magic.from_file(local_path, mime=True)
+    return magic.from_file(local_path, mime=True) # type: ignore
 
 
 async def get_media_info(local_path: Path) -> MediaInfo | None:
