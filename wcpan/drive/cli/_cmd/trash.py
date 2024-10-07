@@ -1,6 +1,7 @@
 from argparse import Namespace
+from collections.abc import Iterable
 
-from wcpan.drive.core.types import Drive
+from wcpan.drive.core.types import Drive, Node
 
 from .lib import SubCommand, add_bool_argument, require_authorized, add_help_message
 from .._lib import print_as_yaml, cout
@@ -46,8 +47,9 @@ async def _action_trash_list(drive: Drive, kwargs: Namespace) -> int:
 async def _action_trash_usage(drive: Drive, kwargs: Namespace) -> int:
     comma: bool = kwargs.comma
 
+    calculator = UsageCalculator(drive)
     node_list = await drive.get_trashed_nodes()
-    rv = sum(_.size for _ in node_list)
+    rv = await calculator(node_list)
     if comma:
         cout(f"{rv:,}")
     else:
@@ -78,3 +80,20 @@ async def _action_trash_purge(drive: Drive, kwargs: Namespace) -> int:
 
     cout("Done.")
     return 0
+
+
+class UsageCalculator:
+    def __init__(self, drive: Drive) -> None:
+        self._drive = drive
+        self._known: set[str] = set()
+
+    async def __call__(self, node_list: Iterable[Node]) -> int:
+        rv = 0
+        for node in node_list:
+            if node.is_directory:
+                children = await self._drive.get_children(node)
+                rv += await self(children)
+            elif node.id not in self._known:
+                rv += node.size
+                self._known.add(node.id)
+        return rv
