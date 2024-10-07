@@ -15,11 +15,13 @@ def add_trash_command(commands: SubCommand):
     add_bool_argument(list_parser, "flatten")
     list_parser.set_defaults(action=_action_trash_list, flatten=False)
 
-    usage_parser = commands.add_parser("usage", help="trash size usage [offline]")
+    usage_parser = commands.add_parser(
+        "usage", aliases=["df"], help="trash size usage [offline]"
+    )
     add_bool_argument(usage_parser, "comma")
     usage_parser.set_defaults(action=_action_trash_usage, comma=True)
 
-    purge_parser = commands.add_parser("purge", help="purge trash")
+    purge_parser = commands.add_parser("purge", aliases=["prune"], help="purge trash")
     add_bool_argument(purge_parser, "ask", short_false="y")
     purge_parser.set_defaults(action=_action_trash_purge, ask=True)
 
