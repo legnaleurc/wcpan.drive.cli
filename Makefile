@@ -7,7 +7,7 @@ PKG_LOCK := poetry.lock
 ENV_DIR := .venv
 ENV_LOCK := $(ENV_DIR)/pyvenv.cfg
 
-.PHONY: all format lint clean purge test build publish venv
+.PHONY: all format lint clean purge test build publish
 
 all: venv
 
@@ -21,7 +21,7 @@ clean:
 	$(RM) ./dist ./build ./*.egg-info
 
 purge: clean
-	$(RM) -rf $(ENV_DIR)
+	$(RM) $(ENV_DIR)
 
 test: venv
 	$(PYTHON) -m compileall wcpan
@@ -40,5 +40,5 @@ $(ENV_LOCK): $(PKG_LOCK)
 	touch $@
 
 $(PKG_LOCK): $(PKG_FILES)
-	poetry lock --no-update
+	poetry lock
 	touch $@
