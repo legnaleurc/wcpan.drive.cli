@@ -47,7 +47,7 @@ class UploadHandler(AbstractHandler[Path, Node]):
         node = await _else_none(self._drive.get_child_by_name(src.name, dst))
         if not node:
             type_, _ext = guess_type(src)
-            media_info = await get_media_info(src)
+            media_info = get_media_info(src)
             node = await upload_file_from_local(
                 self._drive, src, dst, mime_type=type_, media_info=media_info
             )

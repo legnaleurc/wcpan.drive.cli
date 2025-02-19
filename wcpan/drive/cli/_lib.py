@@ -1,11 +1,9 @@
-import json
-import math
 import sys
 from concurrent.futures import Executor, ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from PIL import Image
+from pymediainfo import MediaInfo as MediaInfo_
 from wcpan.drive.core.types import MediaInfo, CreateHasher, Drive
 import yaml
 
@@ -55,37 +53,27 @@ def print_as_yaml(data: Any) -> None:
 
 
 def get_image_info(local_path: Path) -> MediaInfo:
-    image = Image.open(str(local_path))  # type: ignore
-    width, height = image.size
-    return MediaInfo.image(width=width, height=height)
+    media_info = MediaInfo_.parse(local_path)
+    try:
+        track = media_info.image_tracks[0]
+    except IndexError as e:
+        raise RuntimeError("not an image") from e
+    return MediaInfo.image(width=track.width, height=track.height)
 
 
-async def get_video_info(local_path: Path) -> MediaInfo:
-    from asyncio import create_subprocess_exec
-    from asyncio.subprocess import PIPE
-
-    cmd = (
-        "ffprobe",
-        "-v",
-        "error",
-        "-show_format",
-        "-show_streams",
-        "-select_streams",
-        "v:0",
-        "-print_format",
-        "json",
-        "-i",
-        str(local_path),
+def get_video_info(local_path: Path) -> MediaInfo:
+    media_info = MediaInfo_.parse(local_path)
+    try:
+        container = media_info.general_tracks[0]
+    except IndexError as e:
+        raise RuntimeError("not a media") from e
+    try:
+        video = media_info.video_tracks[0]
+    except IndexError as e:
+        raise RuntimeError("not a video") from e
+    return MediaInfo.video(
+        width=video.width, height=video.height, ms_duration=container.duration
     )
-    cp = await create_subprocess_exec(*cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    out, _err = await cp.communicate()
-    data = json.loads(out)
-    format_ = data["format"]
-    ms_duration = math.floor(float(format_["duration"]) * 1000)
-    video = data["streams"][0]
-    width = video["width"]
-    height = video["height"]
-    return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
 
 
 def get_mime_type(local_path: Path) -> str:
@@ -94,7 +82,7 @@ def get_mime_type(local_path: Path) -> str:
     return magic.from_file(local_path, mime=True)  # type: ignore
 
 
-async def get_media_info(local_path: Path) -> MediaInfo | None:
+def get_media_info(local_path: Path) -> MediaInfo | None:
     mime_type = get_mime_type(local_path)
     if not mime_type:
         return None
@@ -103,7 +91,7 @@ async def get_media_info(local_path: Path) -> MediaInfo | None:
         return get_image_info(local_path)
 
     if mime_type.startswith("video/"):
-        return await get_video_info(local_path)
+        return get_video_info(local_path)
 
     return None
 
