@@ -29,7 +29,7 @@ def main(args: list[str] | None = None) -> int:
     if args is None:
         args = sys.argv
     try:
-        return asyncio.run(amain(args))
+        return asyncio.run(amain(args[1:]))
     except KeyboardInterrupt:
         return 1
 
@@ -37,7 +37,7 @@ def main(args: list[str] | None = None) -> int:
 async def amain(args: list[str]) -> int:
     dictConfig(ConfigBuilder().add("wcpan", level="D").to_dict())
 
-    kwargs = _parse_args(args[1:])
+    kwargs = _parse_args(args)
     if not kwargs.action:
         kwargs.fallback_action()
         return 0

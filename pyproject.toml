@@ -9,6 +9,9 @@ authors = [
 ]
 dynamic = ["classifiers", "dependencies", "requires-python"]
 
+[project.scripts]
+"wcpan.drive.cli" = "wcpan.drive.cli._main:main"
+
 [tool.poetry]
 requires-poetry = "^2.1"
 packages = [{include = "wcpan"}]

@@ -21,14 +21,14 @@ class TestMain(IsolatedAsyncioTestCase):
     @patch("sys.stderr", new_callable=StringIO)
     async def testMkdirNoArgs(self, stderr: StringIO):
         with self.assertRaises(SystemExit):
-            await amain(["", "mkdir"])
+            await amain(["mkdir"])
 
     @patch("sys.stderr", new_callable=StringIO)
     async def testMkdirWithPath(self, stderr: StringIO):
         parent_node = MagicMock()
         aexpect(self._drive.get_node_by_path).return_value = parent_node
 
-        rv = await amain(["", "-cc.yaml", "mkdir", "/var/log"])
+        rv = await amain(["-cc.yaml", "mkdir", "/var/log"])
         self.assertEqual(rv, 0)
 
         path = PurePath("/var/log")
