@@ -24,7 +24,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.12"
-Pillow = "^10.4.0"
 PyYAML = "^6.0.1"
 wcpan-drive-core = "^4.1.0"
 wcpan-logging = "^2.0.3"
