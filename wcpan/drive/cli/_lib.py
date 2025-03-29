@@ -53,7 +53,9 @@ def print_as_yaml(data: Any) -> None:
 
 
 def get_image_info(local_path: Path) -> MediaInfo:
-    media_info = MediaInfo_.parse(local_path)
+    media_info = MediaInfo_.parse(
+        local_path, mediainfo_options={"File_TestContinuousFileNames": "0"}
+    )
     try:
         track = media_info.image_tracks[0]
     except IndexError as e:
