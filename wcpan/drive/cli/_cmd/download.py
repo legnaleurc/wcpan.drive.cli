@@ -1,12 +1,12 @@
-from asyncio import as_completed
 from argparse import Namespace
+from asyncio import as_completed
 from pathlib import Path
 
 from wcpan.drive.core.types import Drive
 
-from .lib import SubCommand, require_authorized, get_node_by_id_or_path
-from ..lib import create_executor
 from .._download import download_list
+from ..lib import create_executor
+from .lib import SubCommand, get_node_by_id_or_path, require_authorized
 
 
 def add_download_command(commands: SubCommand):

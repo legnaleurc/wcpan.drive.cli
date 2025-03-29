@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from wcpan.queue import AioQueue
 
-from ._lib import cout, cerr
+from ._lib import cerr, cout
 
 
 class AbstractHandler[S, D](metaclass=ABCMeta):
@@ -60,9 +60,9 @@ class ProgressTracker:
         return self._error > 0
 
 
-async def walk_list[
-    S, D
-](handler: AbstractHandler[S, D], srcs: Iterable[S], dst: D, *, jobs: int) -> bool:
+async def walk_list[S, D](
+    handler: AbstractHandler[S, D], srcs: Iterable[S], dst: D, *, jobs: int
+) -> bool:
     from asyncio import as_completed
 
     total = 0
@@ -80,9 +80,7 @@ async def walk_list[
     return tracker.has_error
 
 
-async def _walk_unknown[
-    S, D
-](
+async def _walk_unknown[S, D](
     src: S,
     dst: D,
     *,
@@ -100,9 +98,7 @@ async def _walk_unknown[
         await queue.push(_walk_file(src, dst, handler=handler, tracker=tracker))
 
 
-async def _walk_directory[
-    S, D
-](
+async def _walk_directory[S, D](
     src: S,
     dst: D,
     *,
@@ -125,9 +121,9 @@ async def _walk_directory[
         )
 
 
-async def _walk_file[
-    S, D
-](src: S, dst: D, *, handler: AbstractHandler[S, D], tracker: ProgressTracker) -> None:
+async def _walk_file[S, D](
+    src: S, dst: D, *, handler: AbstractHandler[S, D], tracker: ProgressTracker
+) -> None:
     try:
         with tracker.collect(handler.format_source(src)):
             await handler.do_file(src, dst)

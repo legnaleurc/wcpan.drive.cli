@@ -1,16 +1,16 @@
-from asyncio import as_completed
 from argparse import Namespace
+from asyncio import as_completed
 from functools import partial
 
 from wcpan.drive.core.types import Drive
 
+from .._lib import cerr
 from .lib import (
     SubCommand,
     add_bool_argument,
-    require_authorized,
     get_node_by_id_or_path,
+    require_authorized,
 )
-from .._lib import cerr
 
 
 def add_remove_command(commands: SubCommand):

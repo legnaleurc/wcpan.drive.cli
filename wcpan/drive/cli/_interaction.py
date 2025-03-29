@@ -1,15 +1,15 @@
-from typing import Any
 import asyncio
 import contextlib
 import enum
 import pathlib
 import shlex
-from threading import Thread, Condition
 from queue import Queue
+from threading import Condition, Thread
+from typing import Any
 
-from wcpan.drive.core.types import Node, Drive
+from wcpan.drive.core.types import Drive, Node
 
-from ._lib import print_as_yaml, cout
+from ._lib import cout, print_as_yaml
 
 
 class TokenType(enum.Enum):

@@ -2,8 +2,8 @@ from argparse import Namespace
 
 from wcpan.drive.core.types import Drive
 
-from .lib import SubCommand
 from .._lib import cout
+from .lib import SubCommand
 
 
 def add_auth_command(commands: SubCommand):

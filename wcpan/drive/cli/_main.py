@@ -1,28 +1,28 @@
 import asyncio
-from logging.config import dictConfig
 import sys
 from argparse import ArgumentParser, Namespace
+from logging.config import dictConfig
 from pathlib import Path
 
 from wcpan.logging import ConfigBuilder
 
 from . import __version__ as VERSION
 from ._cfg import create_drive_from_config
-from ._cmd.lib import add_help_message
 from ._cmd.auth import add_auth_command
-from ._cmd.sync import add_sync_command
+from ._cmd.download import add_download_command
 from ._cmd.find import add_find_command
 from ._cmd.info import add_info_command
+from ._cmd.lib import add_help_message
 from ._cmd.list_ import add_list_command
-from ._cmd.tree import add_tree_command
-from ._cmd.usage import add_usage_command
-from ._cmd.download import add_download_command
-from ._cmd.upload import add_upload_command
-from ._cmd.remove import add_remove_command
-from ._cmd.move import add_move_command
 from ._cmd.mkdir import add_mkdir_command
-from ._cmd.trash import add_trash_command
+from ._cmd.move import add_move_command
+from ._cmd.remove import add_remove_command
 from ._cmd.shell import add_shell_command
+from ._cmd.sync import add_sync_command
+from ._cmd.trash import add_trash_command
+from ._cmd.tree import add_tree_command
+from ._cmd.upload import add_upload_command
+from ._cmd.usage import add_usage_command
 
 
 def main(args: list[str] | None = None) -> int:

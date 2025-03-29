@@ -1,11 +1,11 @@
 from argparse import Namespace
 from dataclasses import asdict
 
-from wcpan.drive.core.types import Drive
 from wcpan.drive.core.lib import dispatch_change
+from wcpan.drive.core.types import Drive
 
-from .lib import SubCommand, add_bool_argument, require_authorized
 from .._lib import cout, print_as_yaml
+from .lib import SubCommand, add_bool_argument, require_authorized
 
 
 def add_sync_command(commands: SubCommand):

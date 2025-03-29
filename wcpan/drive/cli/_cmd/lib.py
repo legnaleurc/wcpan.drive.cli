@@ -1,6 +1,10 @@
-from argparse import ArgumentParser
+# Need official type support
+from argparse import (
+    ArgumentParser,
+    _SubParsersAction,  # type: ignore
+)
 from collections.abc import Awaitable, Callable
-from functools import wraps, partial
+from functools import partial, wraps
 from io import StringIO
 from pathlib import PurePath
 
@@ -8,9 +12,6 @@ from wcpan.drive.core.exceptions import UnauthorizedError
 from wcpan.drive.core.types import Drive, Node
 
 from .._lib import cout
-
-# Need official type support
-from argparse import _SubParsersAction  # type: ignore
 
 
 type SubCommand = _SubParsersAction[ArgumentParser]
@@ -41,9 +42,9 @@ def add_bool_argument(
     parser.add_argument(*neg_flags, dest=name, action="store_false")
 
 
-def require_authorized[
-    **A
-](fn: Callable[A, Awaitable[int]]) -> Callable[A, Awaitable[int]]:
+def require_authorized[**A](
+    fn: Callable[A, Awaitable[int]],
+) -> Callable[A, Awaitable[int]]:
     @wraps(fn)
     async def action(*args: A.args, **kwargs: A.kwargs) -> int:
         try:

@@ -3,10 +3,10 @@ from pathlib import PurePath
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
-from wcpan.drive.core.types import Drive
 from wcpan.drive.cli._main import amain
+from wcpan.drive.core.types import Drive
 
-from ._lib import create_amock, aexpect
+from ._lib import aexpect, create_amock
 
 
 class TestMain(IsolatedAsyncioTestCase):

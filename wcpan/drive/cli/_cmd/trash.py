@@ -3,8 +3,8 @@ from collections.abc import Iterable
 
 from wcpan.drive.core.types import Drive, Node
 
-from .lib import SubCommand, add_bool_argument, require_authorized, add_help_message
-from .._lib import print_as_yaml, cout
+from .._lib import cout, print_as_yaml
+from .lib import SubCommand, add_bool_argument, add_help_message, require_authorized
 
 
 def add_trash_command(commands: SubCommand):

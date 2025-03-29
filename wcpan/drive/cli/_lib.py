@@ -3,9 +3,10 @@ from concurrent.futures import Executor, ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from pymediainfo import MediaInfo as MediaInfo_
-from wcpan.drive.core.types import MediaInfo, CreateHasher, Drive
 import yaml
+from pymediainfo import MediaInfo as MediaInfo_
+
+from wcpan.drive.core.types import CreateHasher, Drive, MediaInfo
 
 
 def _get_hash_off_main(local_path: Path, create_hasher: CreateHasher) -> str:
@@ -108,6 +109,6 @@ def create_executor() -> Executor:
 
 
 def _initialize_worker() -> None:
-    from signal import signal, SIG_IGN, SIGINT
+    from signal import SIG_IGN, SIGINT, signal
 
     signal(SIGINT, SIG_IGN)
