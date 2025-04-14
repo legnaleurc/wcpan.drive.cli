@@ -74,8 +74,11 @@ def get_video_info(local_path: Path) -> MediaInfo:
         video = media_info.video_tracks[0]
     except IndexError as e:
         raise RuntimeError("not a video") from e
+    ms_duration = container.duration
+    if not isinstance(ms_duration, int):
+        raise RuntimeError(f"invalid duration: {ms_duration}")
     return MediaInfo.video(
-        width=video.width, height=video.height, ms_duration=container.duration
+        width=video.width, height=video.height, ms_duration=ms_duration
     )
 
 
