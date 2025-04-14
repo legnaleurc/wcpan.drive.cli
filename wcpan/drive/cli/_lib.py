@@ -61,6 +61,14 @@ def get_image_info(local_path: Path) -> MediaInfo:
         track = media_info.image_tracks[0]
     except IndexError as e:
         raise RuntimeError("not an image") from e
+
+    width = track.width
+    height = track.height
+    if not isinstance(width, int):
+        raise RuntimeError(f"invalid width: {width}")
+    if not isinstance(height, int):
+        raise RuntimeError(f"invalid height: {height}")
+
     return MediaInfo.image(width=track.width, height=track.height)
 
 
@@ -74,12 +82,18 @@ def get_video_info(local_path: Path) -> MediaInfo:
         video = media_info.video_tracks[0]
     except IndexError as e:
         raise RuntimeError("not a video") from e
+
+    width = video.width
+    height = video.height
     ms_duration = container.duration
+    if not isinstance(width, int):
+        raise RuntimeError(f"invalid width: {width}")
+    if not isinstance(height, int):
+        raise RuntimeError(f"invalid height: {height}")
     if not isinstance(ms_duration, int):
         raise RuntimeError(f"invalid duration: {ms_duration}")
-    return MediaInfo.video(
-        width=video.width, height=video.height, ms_duration=ms_duration
-    )
+
+    return MediaInfo.video(width=width, height=height, ms_duration=ms_duration)
 
 
 def get_mime_type(local_path: Path) -> str:
