@@ -11,9 +11,10 @@ from .lib import get_file_hash
 
 
 class DownloadHandler(AbstractHandler[Node, Path]):
-    def __init__(self, *, drive: Drive, pool: Executor) -> None:
+    def __init__(self, *, drive: Drive, pool: Executor, include_trash: bool) -> None:
         self._drive = drive
         self._pool = pool
+        self._include_trash = include_trash
 
     @override
     async def count_all(self, src: Node) -> int:
@@ -24,6 +25,8 @@ class DownloadHandler(AbstractHandler[Node, Path]):
 
     @override
     def source_is_trashed(self, src: Node) -> bool:
+        if self._include_trash:
+            return False
         return src.is_trashed
 
     @override
@@ -60,7 +63,13 @@ class DownloadHandler(AbstractHandler[Node, Path]):
 
 
 async def download_list(
-    srcs: Iterable[Node], dst: Path, *, drive: Drive, pool: Executor, jobs: int
+    srcs: Iterable[Node],
+    dst: Path,
+    *,
+    drive: Drive,
+    pool: Executor,
+    jobs: int,
+    include_trash: bool,
 ) -> bool:
-    handler = DownloadHandler(drive=drive, pool=pool)
+    handler = DownloadHandler(drive=drive, pool=pool, include_trash=include_trash)
     return await walk_list(handler, srcs, dst, jobs=jobs)

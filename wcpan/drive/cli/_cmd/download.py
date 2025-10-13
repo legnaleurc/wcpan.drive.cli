@@ -6,7 +6,12 @@ from wcpan.drive.core.types import Drive
 
 from .._download import download_list
 from ..lib import create_executor
-from .lib import SubCommand, get_node_by_id_or_path, require_authorized
+from .lib import (
+    SubCommand,
+    add_bool_argument,
+    get_node_by_id_or_path,
+    require_authorized,
+)
 
 
 def add_download_command(commands: SubCommand):
@@ -23,6 +28,7 @@ def add_download_command(commands: SubCommand):
         default=1,
         help="maximum simultaneously download jobs (default: %(default)s)",
     )
+    add_bool_argument(parser, "include_trash")
     parser.add_argument("id_or_path", type=str, nargs="+")
     parser.add_argument("destination", type=str)
 
@@ -31,15 +37,22 @@ def add_download_command(commands: SubCommand):
 async def _action_download(drive: Drive, kwargs: Namespace) -> int:
     id_or_path: list[str] = kwargs.id_or_path
     destination: str = kwargs.destination
+    jobs: int = kwargs.jobs
+    include_trash: bool = kwargs.include_trash
 
     with create_executor() as pool:
         g = (get_node_by_id_or_path(drive, _) for _ in id_or_path)
         ag = (await _ for _ in as_completed(g))
-        node_list = [_ async for _ in ag if not _.is_trashed]
+        node_list = [_ async for _ in ag if not _.is_trashed or include_trash]
         dst = Path(destination)
 
         ok = await download_list(
-            node_list, dst, drive=drive, pool=pool, jobs=kwargs.jobs
+            node_list,
+            dst,
+            drive=drive,
+            pool=pool,
+            jobs=jobs,
+            include_trash=include_trash,
         )
 
     return 0 if ok else 1
