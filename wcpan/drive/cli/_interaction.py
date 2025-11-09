@@ -14,12 +14,12 @@ from wcpan.drive.core.exceptions import UnauthorizedError
 from wcpan.drive.core.lib import download_file_to_local, move_node
 from wcpan.drive.core.types import Drive, Node
 
-from .lib import create_executor
 from ._cmd.lib import get_node_by_id_or_path as get_node_by_id_or_path_cmd
 from ._cmd.lib import get_path_by_id_or_path as get_path_by_id_or_path_cmd
 from ._download import download_list
 from ._lib import cerr, cout, print_as_yaml
 from ._upload import upload_list
+from .lib import create_executor
 
 
 class TokenType(enum.Enum):
@@ -143,7 +143,9 @@ class ShellContext(object):
         # List each node
         for node in nodes:
             if recursive:
-                await self._list_recursive(node, long_format, show_all, human_readable, "")
+                await self._list_recursive(
+                    node, long_format, show_all, human_readable, ""
+                )
             else:
                 await self._list_directory(node, long_format, show_all, human_readable)
 
@@ -492,9 +494,7 @@ class ShellContext(object):
 
         # Get destination node
         try:
-            dst_node = await get_node_by_path_or_id(
-                self._drive, self._cwd, destination
-            )
+            dst_node = await get_node_by_path_or_id(self._drive, self._cwd, destination)
             if not dst_node.is_directory:
                 cout(f"{destination} is not a directory")
                 return
@@ -502,7 +502,9 @@ class ShellContext(object):
             # Upload files
             with create_executor() as pool:
                 src_paths = [Path(s) for s in sources]
-                ok = await upload_list(src_paths, dst_node, drive=self._drive, pool=pool, jobs=jobs)
+                ok = await upload_list(
+                    src_paths, dst_node, drive=self._drive, pool=pool, jobs=jobs
+                )
                 if not ok:
                     cerr("upload failed")
         except UnauthorizedError:
@@ -594,9 +596,7 @@ class ShellContext(object):
             # Download to temp file and display
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmp_path = Path(tmpdir)
-                local_file = await download_file_to_local(
-                    self._drive, node, tmp_path
-                )
+                local_file = await download_file_to_local(self._drive, node, tmp_path)
                 with open(local_file, "rb") as f:
                     content = f.read()
                     try:
