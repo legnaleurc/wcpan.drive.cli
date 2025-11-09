@@ -2,7 +2,6 @@ import asyncio
 import enum
 import pathlib
 import shlex
-from typing import Any
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import Completer, Completion
