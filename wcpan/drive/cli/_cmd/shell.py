@@ -3,7 +3,7 @@ from argparse import Namespace
 from wcpan.drive.core.exceptions import NodeNotFoundError
 from wcpan.drive.core.types import Drive
 
-from .._interaction import interact
+from .._interaction import interact_async
 from .._lib import cout
 from .lib import SubCommand, get_node_by_id_or_path
 
@@ -30,5 +30,5 @@ async def _action_shell(drive: Drive, args: Namespace) -> int:
         cout(f"{id_or_path} is not a folder")
         return 1
 
-    interact(drive, node)
+    await interact_async(drive, node)
     return 0
