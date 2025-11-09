@@ -7,7 +7,7 @@ from asyncio import as_completed
 from pathlib import Path
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.completion import Completer, Completion, ThreadedCompleter
 from prompt_toolkit.history import InMemoryHistory
 
 from wcpan.drive.core.exceptions import UnauthorizedError
@@ -791,7 +791,7 @@ class DriveCompleter(Completer):
     def __init__(self, context: ShellContext) -> None:
         self._context = context
 
-    async def get_completions(self, document, complete_event):
+    def get_completions(self, document, complete_event):
         text = document.text_before_cursor
         end_index = document.cursor_position
 
@@ -817,10 +817,34 @@ class DriveCompleter(Completer):
             for value in values:
                 yield Completion(value, start_position=-len(prefix))
         elif type_ == TokenType.Path:
-            # For async path completion, we can now use await
-            values = await self._context._get_path(prefix, token)
-            for value in values:
-                yield Completion(value, start_position=-len(prefix))
+            # For async path completion, ThreadedCompleter will run this in a thread
+            # We need to run the async call synchronously
+            try:
+                # Get the event loop from the context
+                # Since ThreadedCompleter runs in a separate thread, we need to
+                # create a new event loop or use the existing one
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    values = loop.run_until_complete(
+                        self._context._get_path(prefix, token)
+                    )
+                    for value in values:
+                        yield Completion(value, start_position=-len(prefix))
+                finally:
+                    loop.close()
+            except Exception:
+                # If async call fails, try cache as fallback
+                try:
+                    cache_key = f"{self._context._cwd.id}:{token}"
+                    if cache_key in self._context._cache._cache:
+                        children = self._context._cache._cache[cache_key]
+                        children = [c for c in children if c.startswith(prefix)]
+                        for value in children:
+                            yield Completion(value, start_position=-len(prefix))
+                except Exception:
+                    # If everything fails, return empty
+                    return
 
 
 def resolve_path(
@@ -891,7 +915,9 @@ def parse_completion(whole_text: str, end_index: int) -> tuple[TokenType, str]:
 async def interact_async(drive: Drive, home_node: Node) -> None:
     context = ShellContext(drive, home_node)
     completer = DriveCompleter(context)
-    session = PromptSession(completer=completer, history=InMemoryHistory())
+    # Wrap in ThreadedCompleter to handle async path completions in a separate thread
+    threaded_completer = ThreadedCompleter(completer)
+    session = PromptSession(completer=threaded_completer, history=InMemoryHistory())
 
     while True:
         prompt = context.get_prompt()
