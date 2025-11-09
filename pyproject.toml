@@ -30,6 +30,7 @@ wcpan-logging = "^2.0.3"
 wcpan-queue = "^7.2.1"
 python-magic = "^0.4.27"
 pymediainfo = "^7.0.1"
+prompt-toolkit = "^3.0.52"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.11.2"
