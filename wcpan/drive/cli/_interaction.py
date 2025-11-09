@@ -791,7 +791,7 @@ class DriveCompleter(Completer):
     def __init__(self, context: ShellContext) -> None:
         self._context = context
 
-    async def get_completions_async(self, document, complete_event):
+    async def get_completions(self, document, complete_event):
         text = document.text_before_cursor
         end_index = document.cursor_position
 
@@ -814,13 +814,13 @@ class DriveCompleter(Completer):
 
         if type_ == TokenType.Global:
             values = self._context._get_global(prefix)
+            for value in values:
+                yield Completion(value, start_position=-len(prefix))
         elif type_ == TokenType.Path:
+            # For async path completion, we can now use await
             values = await self._context._get_path(prefix, token)
-        else:
-            return
-
-        for value in values:
-            yield Completion(value, start_position=-len(prefix))
+            for value in values:
+                yield Completion(value, start_position=-len(prefix))
 
 
 def resolve_path(
