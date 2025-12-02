@@ -86,6 +86,10 @@ def get_video_info(local_path: Path) -> MediaInfo:
     width = video.width
     height = video.height
     ms_duration = container.duration
+
+    if isinstance(ms_duration, str):
+        ms_duration = int(float(ms_duration))
+
     if not isinstance(width, int):
         raise RuntimeError(f"invalid width: {width}")
     if not isinstance(height, int):
