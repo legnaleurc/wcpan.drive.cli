@@ -69,7 +69,8 @@ async def download_list(
     drive: Drive,
     pool: Executor,
     jobs: int,
+    fail_fast: bool,
     include_trash: bool,
 ) -> bool:
     handler = DownloadHandler(drive=drive, pool=pool, include_trash=include_trash)
-    return await walk_list(handler, srcs, dst, jobs=jobs)
+    return await walk_list(handler, srcs, dst, jobs=jobs, fail_fast=fail_fast)

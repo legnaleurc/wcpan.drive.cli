@@ -20,7 +20,6 @@ def add_download_command(commands: SubCommand):
         aliases=["dl"],
         help="download files/folders",
     )
-    parser.set_defaults(action=_action_download)
     parser.add_argument(
         "-j",
         "--jobs",
@@ -28,9 +27,11 @@ def add_download_command(commands: SubCommand):
         default=1,
         help="maximum simultaneously download jobs (default: %(default)s)",
     )
+    add_bool_argument(parser, "fail_fast")
     add_bool_argument(parser, "include_trash")
     parser.add_argument("id_or_path", type=str, nargs="+")
     parser.add_argument("destination", type=str)
+    parser.set_defaults(action=_action_download, fail_fast=True, include_trash=False)
 
 
 @require_authorized
@@ -38,6 +39,7 @@ async def _action_download(drive: Drive, kwargs: Namespace) -> int:
     id_or_path: list[str] = kwargs.id_or_path
     destination: str = kwargs.destination
     jobs: int = kwargs.jobs
+    fail_fast: bool = kwargs.fail_fast
     include_trash: bool = kwargs.include_trash
 
     with create_executor() as pool:
@@ -52,6 +54,7 @@ async def _action_download(drive: Drive, kwargs: Namespace) -> int:
             drive=drive,
             pool=pool,
             jobs=jobs,
+            fail_fast=fail_fast,
             include_trash=include_trash,
         )
 

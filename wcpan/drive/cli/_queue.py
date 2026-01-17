@@ -61,7 +61,12 @@ class ProgressTracker:
 
 
 async def walk_list[S, D](
-    handler: AbstractHandler[S, D], srcs: Iterable[S], dst: D, *, jobs: int
+    handler: AbstractHandler[S, D],
+    srcs: Iterable[S],
+    dst: D,
+    *,
+    jobs: int,
+    fail_fast: bool,
 ) -> bool:
     from asyncio import as_completed
 
@@ -73,7 +78,14 @@ async def walk_list[S, D](
     with AioQueue[None].fifo() as queue:
         for src in srcs:
             await queue.push(
-                _walk_unknown(src, dst, queue=queue, handler=handler, tracker=tracker)
+                _walk_unknown(
+                    src,
+                    dst,
+                    queue=queue,
+                    handler=handler,
+                    tracker=tracker,
+                    fail_fast=fail_fast,
+                )
             )
         await queue.consume(jobs)
 
@@ -87,15 +99,25 @@ async def _walk_unknown[S, D](
     queue: AioQueue[None],
     handler: AbstractHandler[S, D],
     tracker: ProgressTracker,
+    fail_fast: bool,
 ) -> None:
     if handler.source_is_trashed(src):
         return
     if handler.source_is_directory(src):
         await queue.push(
-            _walk_directory(src, dst, queue=queue, handler=handler, tracker=tracker)
+            _walk_directory(
+                src,
+                dst,
+                queue=queue,
+                handler=handler,
+                tracker=tracker,
+                fail_fast=fail_fast,
+            )
         )
     else:
-        await queue.push(_walk_file(src, dst, handler=handler, tracker=tracker))
+        await queue.push(
+            _walk_file(src, dst, handler=handler, tracker=tracker, fail_fast=fail_fast)
+        )
 
 
 async def _walk_directory[S, D](
@@ -105,27 +127,42 @@ async def _walk_directory[S, D](
     queue: AioQueue[None],
     handler: AbstractHandler[S, D],
     tracker: ProgressTracker,
+    fail_fast: bool,
 ) -> None:
     try:
         with tracker.collect(handler.format_source(src)):
             new_directory = await handler.do_directory(src, dst)
             children = await handler.get_children(src)
     except Exception:
+        if fail_fast:
+            raise
         return
 
     for child in children:
         await queue.push(
             _walk_unknown(
-                child, new_directory, queue=queue, handler=handler, tracker=tracker
+                child,
+                new_directory,
+                queue=queue,
+                handler=handler,
+                tracker=tracker,
+                fail_fast=fail_fast,
             )
         )
 
 
 async def _walk_file[S, D](
-    src: S, dst: D, *, handler: AbstractHandler[S, D], tracker: ProgressTracker
+    src: S,
+    dst: D,
+    *,
+    handler: AbstractHandler[S, D],
+    tracker: ProgressTracker,
+    fail_fast: bool,
 ) -> None:
     try:
         with tracker.collect(handler.format_source(src)):
             await handler.do_file(src, dst)
     except Exception:
+        if fail_fast:
+            raise
         return

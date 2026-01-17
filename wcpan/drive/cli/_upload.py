@@ -67,10 +67,16 @@ class UploadHandler(AbstractHandler[Path, Node]):
 
 
 async def upload_list(
-    srcs: Iterable[Path], dst: Node, *, drive: Drive, pool: Executor, jobs: int
+    srcs: Iterable[Path],
+    dst: Node,
+    *,
+    drive: Drive,
+    pool: Executor,
+    jobs: int,
+    fail_fast: bool,
 ) -> bool:
     handler = UploadHandler(drive=drive, pool=pool)
-    return await walk_list(handler, srcs, dst, jobs=jobs)
+    return await walk_list(handler, srcs, dst, jobs=jobs, fail_fast=fail_fast)
 
 
 async def _else_none(aw: Awaitable[Node]) -> Node | None:
