@@ -1,6 +1,6 @@
 [project]
 name = "wcpan-drive-cli"
-version = "3.8.1"
+version = "3.9.0"
 description = "command line tool for wcpan.drive"
 readme = "README.md"
 license = "MIT"
