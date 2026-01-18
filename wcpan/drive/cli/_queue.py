@@ -61,10 +61,11 @@ class ProgressTracker:
 
 
 async def walk_list[S, D](
-    handler: AbstractHandler[S, D],
     srcs: Iterable[S],
     dst: D,
     *,
+    handler: AbstractHandler[S, D],
+    failed: list[S],
     jobs: int,
     fail_fast: bool,
 ) -> bool:
@@ -83,6 +84,7 @@ async def walk_list[S, D](
                     dst,
                     queue=queue,
                     handler=handler,
+                    failed=failed,
                     tracker=tracker,
                     fail_fast=fail_fast,
                 )
@@ -98,6 +100,7 @@ async def _walk_unknown[S, D](
     *,
     queue: AioQueue[None],
     handler: AbstractHandler[S, D],
+    failed: list[S],
     tracker: ProgressTracker,
     fail_fast: bool,
 ) -> None:
@@ -110,13 +113,21 @@ async def _walk_unknown[S, D](
                 dst,
                 queue=queue,
                 handler=handler,
+                failed=failed,
                 tracker=tracker,
                 fail_fast=fail_fast,
             )
         )
     else:
         await queue.push(
-            _walk_file(src, dst, handler=handler, tracker=tracker, fail_fast=fail_fast)
+            _walk_file(
+                src,
+                dst,
+                handler=handler,
+                failed=failed,
+                tracker=tracker,
+                fail_fast=fail_fast,
+            )
         )
 
 
@@ -126,6 +137,7 @@ async def _walk_directory[S, D](
     *,
     queue: AioQueue[None],
     handler: AbstractHandler[S, D],
+    failed: list[S],
     tracker: ProgressTracker,
     fail_fast: bool,
 ) -> None:
@@ -136,6 +148,7 @@ async def _walk_directory[S, D](
     except Exception:
         if fail_fast:
             raise
+        failed.append(src)
         return
 
     for child in children:
@@ -145,6 +158,7 @@ async def _walk_directory[S, D](
                 new_directory,
                 queue=queue,
                 handler=handler,
+                failed=failed,
                 tracker=tracker,
                 fail_fast=fail_fast,
             )
@@ -156,6 +170,7 @@ async def _walk_file[S, D](
     dst: D,
     *,
     handler: AbstractHandler[S, D],
+    failed: list[S],
     tracker: ProgressTracker,
     fail_fast: bool,
 ) -> None:
@@ -165,4 +180,5 @@ async def _walk_file[S, D](
     except Exception:
         if fail_fast:
             raise
+        failed.append(src)
         return

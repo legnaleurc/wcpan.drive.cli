@@ -3,6 +3,7 @@ from pathlib import Path
 
 from wcpan.drive.core.types import Drive
 
+from .._lib import cerr
 from .._upload import upload_list
 from ..lib import create_executor
 from .lib import (
@@ -42,9 +43,21 @@ async def _action_upload(drive: Drive, kwargs: Namespace) -> int:
     with create_executor() as pool:
         node = await get_node_by_id_or_path(drive, id_or_path)
         src_list = [Path(_) for _ in source]
+        failed: list[Path] = []
 
         ok = await upload_list(
-            src_list, node, drive=drive, pool=pool, jobs=jobs, fail_fast=fail_fast
+            src_list,
+            node,
+            drive=drive,
+            pool=pool,
+            jobs=jobs,
+            fail_fast=fail_fast,
+            failed=failed,
         )
+
+        if not fail_fast and failed:
+            cerr("upload failed:")
+            for f in failed:
+                cerr(f"  - {f}")
 
     return 0 if ok else 1

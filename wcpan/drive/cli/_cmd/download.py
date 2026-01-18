@@ -2,9 +2,10 @@ from argparse import Namespace
 from asyncio import as_completed
 from pathlib import Path
 
-from wcpan.drive.core.types import Drive
+from wcpan.drive.core.types import Drive, Node
 
 from .._download import download_list
+from .._lib import cerr
 from ..lib import create_executor
 from .lib import (
     SubCommand,
@@ -47,6 +48,7 @@ async def _action_download(drive: Drive, kwargs: Namespace) -> int:
         ag = (await _ for _ in as_completed(g))
         node_list = [_ async for _ in ag if not _.is_trashed or include_trash]
         dst = Path(destination)
+        failed: list[Node] = []
 
         ok = await download_list(
             node_list,
@@ -56,6 +58,12 @@ async def _action_download(drive: Drive, kwargs: Namespace) -> int:
             jobs=jobs,
             fail_fast=fail_fast,
             include_trash=include_trash,
+            failed=failed,
         )
+
+        if not fail_fast and failed:
+            cerr("download failed:")
+            for f in failed:
+                cerr(f"  {f.id}: {f.name}")
 
     return 0 if ok else 1

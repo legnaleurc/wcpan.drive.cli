@@ -74,9 +74,12 @@ async def upload_list(
     pool: Executor,
     jobs: int,
     fail_fast: bool,
+    failed: list[Path],
 ) -> bool:
     handler = UploadHandler(drive=drive, pool=pool)
-    return await walk_list(handler, srcs, dst, jobs=jobs, fail_fast=fail_fast)
+    return await walk_list(
+        srcs, dst, handler=handler, failed=failed, jobs=jobs, fail_fast=fail_fast
+    )
 
 
 async def _else_none(aw: Awaitable[Node]) -> Node | None:
