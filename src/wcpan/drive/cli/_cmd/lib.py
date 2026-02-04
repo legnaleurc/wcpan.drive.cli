@@ -8,7 +8,7 @@ from functools import partial, wraps
 from io import StringIO
 from pathlib import PurePath
 
-from wcpan.drive.core.exceptions import UnauthorizedError
+from wcpan.drive.core.exceptions import AuthenticationError
 from wcpan.drive.core.types import Drive, Node
 
 from .._lib import cout
@@ -42,15 +42,15 @@ def add_bool_argument(
     parser.add_argument(*neg_flags, dest=name, action="store_false")
 
 
-def require_authorized[**A](
+def require_authenticated[**A](
     fn: Callable[A, Awaitable[int]],
 ) -> Callable[A, Awaitable[int]]:
     @wraps(fn)
     async def action(*args: A.args, **kwargs: A.kwargs) -> int:
         try:
             return await fn(*args, **kwargs)
-        except UnauthorizedError:
-            cout("not authorized")
+        except AuthenticationError:
+            cout("not authenticated")
             return 1
 
     return action

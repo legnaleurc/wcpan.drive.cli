@@ -16,11 +16,10 @@ def add_auth_command(commands: SubCommand):
 
 
 async def _action_auth(drive: Drive, kwargs: Namespace) -> int:
-    url = await drive.get_oauth_url()
-    cout("Access the following URL to authorize user:\n")
-    cout(url)
-    cout("")
-    cout("Paste the redireced URL or provided code here:")
-    answer = input("")
-    await drive.set_oauth_token(answer)
-    return 0
+    try:
+        await drive.authenticate()
+        cout("Authentication successful")
+        return 0
+    except Exception as e:
+        cout(f"Authentication failed: {e}")
+        return 1

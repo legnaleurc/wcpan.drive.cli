@@ -6,7 +6,7 @@ from wcpan.drive.core.lib import move_node
 from wcpan.drive.core.types import Drive
 
 from .._lib import cerr
-from .lib import SubCommand, get_path_by_id_or_path, require_authorized
+from .lib import SubCommand, get_path_by_id_or_path, require_authenticated
 
 
 def add_move_command(commands: SubCommand):
@@ -20,7 +20,7 @@ def add_move_command(commands: SubCommand):
     parser.add_argument("destination_path", type=str)
 
 
-@require_authorized
+@require_authenticated
 async def _action_rename(drive: Drive, kwargs: Namespace) -> int:
     src_list: list[str] = kwargs.source_id_or_path
     dst_path = PurePath(kwargs.destination_path)

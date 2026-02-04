@@ -10,7 +10,7 @@ from .lib import (
     SubCommand,
     add_bool_argument,
     get_node_by_id_or_path,
-    require_authorized,
+    require_authenticated,
 )
 
 
@@ -33,7 +33,7 @@ def add_upload_command(commands: SubCommand):
     parser.set_defaults(action=_action_upload, fail_fast=True)
 
 
-@require_authorized
+@require_authenticated
 async def _action_upload(drive: Drive, kwargs: Namespace) -> int:
     id_or_path: str = kwargs.id_or_path
     source: list[str] = kwargs.source

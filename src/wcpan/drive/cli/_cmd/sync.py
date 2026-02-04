@@ -5,7 +5,7 @@ from wcpan.drive.core.lib import dispatch_change
 from wcpan.drive.core.types import Drive
 
 from .._lib import cout, print_as_yaml
-from .lib import SubCommand, add_bool_argument, require_authorized
+from .lib import SubCommand, add_bool_argument, require_authenticated
 
 
 def add_sync_command(commands: SubCommand):
@@ -18,7 +18,7 @@ def add_sync_command(commands: SubCommand):
     parser.set_defaults(action=_action_sync)
 
 
-@require_authorized
+@require_authenticated
 async def _action_sync(drive: Drive, kwargs: Namespace) -> int:
     verbose: bool = kwargs.verbose
 

@@ -11,7 +11,7 @@ from .lib import (
     SubCommand,
     add_bool_argument,
     get_node_by_id_or_path,
-    require_authorized,
+    require_authenticated,
 )
 
 
@@ -35,7 +35,7 @@ def add_download_command(commands: SubCommand):
     parser.set_defaults(action=_action_download, fail_fast=True, include_trash=False)
 
 
-@require_authorized
+@require_authenticated
 async def _action_download(drive: Drive, kwargs: Namespace) -> int:
     id_or_path: list[str] = kwargs.id_or_path
     destination: str = kwargs.destination

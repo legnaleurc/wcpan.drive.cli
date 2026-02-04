@@ -3,7 +3,7 @@ from pathlib import PurePath
 
 from wcpan.drive.core.types import Drive
 
-from .lib import SubCommand, require_authorized
+from .lib import SubCommand, require_authenticated
 
 
 def add_mkdir_command(commands: SubCommand):
@@ -15,7 +15,7 @@ def add_mkdir_command(commands: SubCommand):
     parser.add_argument("path", type=str)
 
 
-@require_authorized
+@require_authenticated
 async def _action_mkdir(drive: Drive, kwargs: Namespace) -> int:
     path = PurePath(kwargs.path)
     parent_path = path.parent

@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from wcpan.drive.core.types import Drive, Node
 
 from .._lib import cout, print_as_yaml
-from .lib import SubCommand, add_bool_argument, add_help_message, require_authorized
+from .lib import SubCommand, add_bool_argument, add_help_message, require_authenticated
 
 
 def add_trash_command(commands: SubCommand):
@@ -59,7 +59,7 @@ async def _action_trash_usage(drive: Drive, kwargs: Namespace) -> int:
     return 0
 
 
-@require_authorized
+@require_authenticated
 async def _action_trash_purge(drive: Drive, kwargs: Namespace) -> int:
     ask: bool = kwargs.ask
 

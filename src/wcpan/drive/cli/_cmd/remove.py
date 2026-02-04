@@ -9,7 +9,7 @@ from .lib import (
     SubCommand,
     add_bool_argument,
     get_node_by_id_or_path,
-    require_authorized,
+    require_authenticated,
 )
 
 
@@ -25,7 +25,7 @@ def add_remove_command(commands: SubCommand):
     parser.add_argument("id_or_path", type=str, nargs="+")
 
 
-@require_authorized
+@require_authenticated
 async def _action_remove(drive: Drive, kwargs: Namespace) -> int:
     id_or_path: str = kwargs.id_or_path
     restore: bool = kwargs.restore
