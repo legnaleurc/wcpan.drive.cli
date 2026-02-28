@@ -6,7 +6,8 @@ from typing import Any, NotRequired, TypedDict
 
 from yaml import safe_load
 
-from wcpan.drive.core import create_drive
+from wcpan.drive.core import compose_service, create_multi_drive
+from wcpan.drive.core.types import SourceConfig
 
 
 class FunctionDict(TypedDict):
@@ -15,19 +16,15 @@ class FunctionDict(TypedDict):
     kwargs: NotRequired[dict[str, Any]]
 
 
-class ServiceDict(TypedDict):
-    main: FunctionDict
-    middleware: NotRequired[list[FunctionDict]]
-
-
-class DriveDict(TypedDict):
-    file: ServiceDict
-    snapshot: ServiceDict
+class SourceDict(TypedDict):
+    name: str
+    file: list[FunctionDict]
+    snapshot: list[FunctionDict]
 
 
 class MainDict(TypedDict):
     version: int
-    drive: DriveDict
+    sources: list[SourceDict]
 
 
 @asynccontextmanager
@@ -36,24 +33,23 @@ async def create_drive_from_config(path: Path):
         main: MainDict = safe_load(fin)
 
     version = main["version"]
-    if version != 2:
+    if version != 3:
         raise RuntimeError("wrong version")
 
-    drive = main["drive"]
-    file_ = drive["file"]
-    file_main = _deserialize(file_["main"])
-    file_middleware = [_deserialize(_) for _ in file_.get("middleware", [])]
-    snapshot = drive["snapshot"]
-    snapshot_main = _deserialize(snapshot["main"])
-    snapshot_middleware = [_deserialize(_) for _ in snapshot.get("middleware", [])]
+    sources = [_parse_source(s) for s in main["sources"]]
 
-    async with create_drive(
-        file=file_main,
-        file_middleware=file_middleware,
-        snapshot=snapshot_main,
-        snapshot_middleware=snapshot_middleware,
-    ) as drive:
+    async with create_multi_drive(sources=sources) as drive:
         yield drive
+
+
+def _parse_source(source: SourceDict) -> SourceConfig:
+    file_fns = [_deserialize(f) for f in source["file"]]
+    snap_fns = [_deserialize(f) for f in source["snapshot"]]
+    return SourceConfig(
+        name=source["name"],
+        file=compose_service(file_fns[0], *file_fns[1:]),
+        snapshot=compose_service(snap_fns[0], *snap_fns[1:]),
+    )
 
 
 def _deserialize(fragment: FunctionDict):
