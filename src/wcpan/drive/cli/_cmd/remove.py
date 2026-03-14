@@ -38,7 +38,7 @@ async def _action_remove(drive: Drive, kwargs: Namespace) -> int:
     action = (
         partial(_purge_node, drive=drive)
         if purge
-        else partial(_trash_node, drive=drive, trashed=not restore)
+        else partial(_restore_node if restore else _soft_delete_node, drive=drive)
     )
 
     rv = 0
@@ -50,7 +50,7 @@ async def _action_remove(drive: Drive, kwargs: Namespace) -> int:
     return rv
 
 
-async def _trash_node(id_or_path: str, /, *, drive: Drive, trashed: bool) -> None:
+async def _soft_delete_node(id_or_path: str, /, *, drive: Drive) -> None:
     try:
         node = await get_node_by_id_or_path(drive, id_or_path)
     except Exception:
@@ -58,7 +58,21 @@ async def _trash_node(id_or_path: str, /, *, drive: Drive, trashed: bool) -> Non
         raise
 
     try:
-        await drive.move(node, trashed=trashed)
+        await drive.delete(node)
+    except Exception as e:
+        cerr(f"operation failed on {id_or_path}, reason: {str(e)}")
+        raise
+
+
+async def _restore_node(id_or_path: str, /, *, drive: Drive) -> None:
+    try:
+        node = await get_node_by_id_or_path(drive, id_or_path)
+    except Exception:
+        cerr(f"{id_or_path} does not exist")
+        raise
+
+    try:
+        await drive.restore(node)
     except Exception as e:
         cerr(f"operation failed on {id_or_path}, reason: {str(e)}")
         raise
@@ -72,7 +86,7 @@ async def _purge_node(id_or_path: str, /, *, drive: Drive) -> None:
         raise
 
     try:
-        await drive.delete(node)
+        await drive.delete(node, permanent=True)
     except Exception as e:
         cerr(f"operation failed on {id_or_path}, reason: {str(e)}")
         raise

@@ -362,22 +362,20 @@ class TestRemove(IsolatedAsyncioTestCase):
     async def testTrashNode(self):
         node = make_node()
         aexpect(self._drive.get_node_by_path).return_value = node
-        aexpect(self._drive.move).return_value = node
 
         rv = await amain(["-cc.yaml", "remove", "/test.txt"])
         self.assertEqual(rv, 0)
 
-        aexpect(self._drive.move).assert_called_once_with(node, trashed=True)
+        aexpect(self._drive.delete).assert_called_once_with(node)
 
     async def testRestoreNode(self):
         node = make_node()
         aexpect(self._drive.get_node_by_path).return_value = node
-        aexpect(self._drive.move).return_value = node
 
         rv = await amain(["-cc.yaml", "remove", "--restore", "/test.txt"])
         self.assertEqual(rv, 0)
 
-        aexpect(self._drive.move).assert_called_once_with(node, trashed=False)
+        aexpect(self._drive.restore).assert_called_once_with(node)
 
     async def testPurgeNode(self):
         node = make_node()
@@ -386,7 +384,7 @@ class TestRemove(IsolatedAsyncioTestCase):
         rv = await amain(["-cc.yaml", "remove", "--purge", "/test.txt"])
         self.assertEqual(rv, 0)
 
-        aexpect(self._drive.delete).assert_called_once_with(node)
+        aexpect(self._drive.delete).assert_called_once_with(node, permanent=True)
 
     @patch("sys.stderr", new_callable=StringIO)
     async def testPurgeAndRestoreConflict(self, stderr: StringIO):

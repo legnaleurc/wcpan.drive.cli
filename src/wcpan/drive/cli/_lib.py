@@ -6,7 +6,7 @@ from typing import Any
 import yaml
 from pymediainfo import MediaInfo as MediaInfo_
 
-from wcpan.drive.core.types import CreateHasher, Drive, MediaInfo
+from wcpan.drive.core.types import CreateHasher, Drive, MediaInfo, Node
 
 
 def _get_hash_off_main(local_path: Path, create_hasher: CreateHasher) -> str:
@@ -27,10 +27,12 @@ def _get_hash_off_main(local_path: Path, create_hasher: CreateHasher) -> str:
     return run(calc())
 
 
-async def get_file_hash(path: Path, /, *, pool: Executor, drive: Drive) -> str:
+async def get_file_hash(
+    path: Path, /, *, pool: Executor, drive: Drive, node: Node
+) -> str:
     from asyncio import get_running_loop
 
-    factory = await drive.get_hasher_factory()
+    factory = await drive.get_hasher_factory(node)
     loop = get_running_loop()
     return await loop.run_in_executor(pool, _get_hash_off_main, path, factory)
 

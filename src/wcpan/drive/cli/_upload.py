@@ -57,9 +57,13 @@ class UploadHandler(AbstractHandler[Path, Node]):
         local_size = src.stat().st_size
         if local_size != node.size:
             raise Exception(f"{src} size mismatch")
-        local_hash = await get_file_hash(src, pool=self._pool, drive=self._drive)
+        local_hash = await get_file_hash(
+            src, pool=self._pool, drive=self._drive, node=node
+        )
         if local_hash != node.hash:
-            raise Exception(f"{src} checksum mismatch")
+            raise Exception(
+                f"{src} checksum mismatch (local:{local_hash}) (remote:{node.hash})"
+            )
 
     @override
     def format_source(self, src: Path) -> str:

@@ -53,7 +53,9 @@ class DownloadHandler(AbstractHandler[Node, Path]):
             raise RuntimeError(f"{local_src} is not a file")
 
         local_src = await download_file_to_local(self._drive, src, dst)
-        local_hash = await get_file_hash(local_src, pool=self._pool, drive=self._drive)
+        local_hash = await get_file_hash(
+            local_src, pool=self._pool, drive=self._drive, node=src
+        )
         if local_hash != src.hash:
             raise RuntimeError(f"{dst} checksum mismatch")
 
