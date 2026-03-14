@@ -30,5 +30,5 @@ async def _action_shell(drive: Drive, args: Namespace) -> int:
         cout(f"{id_or_path} is not a folder")
         return 1
 
-    interact(drive, node)
+    await interact(drive, node)
     return 0
